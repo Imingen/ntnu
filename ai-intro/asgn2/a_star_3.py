@@ -1,6 +1,7 @@
 from collections import deque
 import numpy as np
 from tkinter import *
+from collections import deque
 
 '''
 1. Load the board into an array CHEKC
@@ -100,7 +101,7 @@ def redraw_board(arr):
         print(string)
 
 def calculate_manhattan(node_a, node_b):
-    return (abs(node_a.x - node_b.x) + abs(node_a.y - node_b.y))
+    return (abs(node_a.x - node_b.x) + abs(node_a.y - node_b.y)) 
 
 cost_dict = {
             "A": 0,
@@ -119,6 +120,8 @@ color_dict = {
             "m": "ivory4",
             "f": "SpringGreen4",
             "g": "SeaGreen1",
+            "O": "gray63",
+            "C": "gray21",
             "r": "slate gray"}
 
 def a_star(start, end, board):
@@ -128,14 +131,13 @@ def a_star(start, end, board):
     '''
     board_n = board
     # Set of nodes evaluated
-    closed_set = deque()
+    closed_set = list()
     # Currently discovered nodes, but not evaluated
     # Initialized with the starting node
-    open_set = deque()
+    open_set = list()
     open_set.append(start)
 
     path = list()
-
 
     while open_set:
         # Current node = the node in the open set with the lowest f score
@@ -144,11 +146,23 @@ def a_star(start, end, board):
         for i, node in enumerate(open_set):
             if open_set[i].f < open_set[lowest_f_index].f:
                 lowest_f_index = i
-
+            if open_set[i].f == open_set[lowest_f_index].f:
+                if open_set[i].g < open_set[lowest_f_index].g:
+                    lowest_f_index = i
         current_node = open_set[lowest_f_index]
-        #print(current_node.__str__())
+
         if current_node == end:
-            
+                
+            for elem in open_set: 
+                if elem.symbol is "B":
+                    continue
+                else:
+                    elem.symbol = 'O'
+            for elem in closed_set:
+                if elem.symbol is "A":
+                    continue
+                else:
+                    elem.symbol = 'C'
             tmp = current_node
             path.append(tmp)
             while tmp.previous:
@@ -161,37 +175,169 @@ def a_star(start, end, board):
 
         neighbors = current_node.neighbors
         for nb in neighbors:
-            
-            if nb in closed_set or nb.symbol is "#":
+            if nb in closed_set:
                 continue
-            
-            tmp_g = current_node.g + nb.cost # Increas G by one, but just keep it in tmp var until more hecks
+            tmp_g = current_node.g + nb.cost
 
-            if nb in open_set:
-                if tmp_g < nb.g:
-                    nb.g = tmp_g
-            else:
-                nb.g = tmp_g
+            if nb not in open_set:
                 open_set.append(nb)
-
+          
+            elif tmp_g >= nb.g:
+                continue
+            nb.previous = current_node       
+            nb.g = tmp_g     
             nb.h = calculate_manhattan(nb, end)
             nb.f = nb.g + nb.h
-            nb.previous = current_node
-    
+
     for elem in path[1:-1]: #Not redrawing the A and B as I want to see where start and finnish is
         elem.symbol = '▪'
+
     redraw_board(board_n)
     draw_4k(board_n, wait = True)
 
-def dijkstra():
-    continue
+def dijkstra(start, end, board):
+    '''
+    The core algorithm.
+    Input: Starting node, end node(goal state) and the board. 
+    '''
+    board_n = board
+    # Set of nodes evaluated
+    closed_set = list()
+    # Currently discovered nodes, but not evaluated
+    # Initialized with the starting node
+    open_set = list()
+    open_set.append(start)
 
-def bfs():
-    continue
+    path = list()
 
+    while open_set:
+        # Current node = the node in the open set with the lowest f score
+        # Assuming that it is the first node so that we can update it
+        lowest_g_index = 0
+        for i, node in enumerate(open_set):
+            if open_set[i].g < open_set[lowest_g_index].g:
+                lowest_g_index = i
+        current_node = open_set[lowest_g_index]
+
+        if current_node == end:
+                
+            for elem in open_set: 
+                if elem.symbol is "B":
+                    continue
+                else:
+                    elem.symbol = 'O'
+            for elem in closed_set:
+                if elem.symbol is "A":
+                    continue
+                else:
+                    elem.symbol = 'C'
+            tmp = current_node
+            path.append(tmp)
+            while tmp.previous:
+                path.append(tmp.previous)
+                tmp = tmp.previous
+            print("FINNISHED")
+
+        open_set.remove(current_node)
+        closed_set.append(current_node)
+
+        neighbors = current_node.neighbors
+        for nb in neighbors:
+            if nb in closed_set:
+                continue
+            tmp_g = current_node.g + nb.cost
+
+            if nb not in open_set:
+                open_set.append(nb)
+          
+            elif tmp_g >= nb.g:
+                continue
+            nb.previous = current_node       
+            nb.g = tmp_g     
+            nb.h = calculate_manhattan(nb, end)
+            nb.f = nb.g + nb.h
+
+    for elem in path[1:-1]: #Not redrawing the A and B as I want to see where start and finnish is
+        elem.symbol = '▪'
+
+    redraw_board(board_n)
+    draw_4k(board_n, wait = True)
+
+
+def bfs(start, end, board):
+    '''
+    The core algorithm.
+    Input: Starting node, end node(goal state) and the board. 
+    '''
+    board_n = board
+    # Set of nodes evaluated
+    closed_set = list()
+    # Currently discovered nodes, but not evaluated
+    # Initialized with the starting node
+    open_set = deque()
+    open_set.append(start)
+
+    path = list()
+
+    while open_set:
+        # Current node = the node in the open set with the lowest f score
+        # Assuming that it is the first node so that we can update it
+        lowest_f_index = 0
+        for i, node in enumerate(open_set):
+            if open_set[i].f < open_set[lowest_f_index].f:
+                lowest_f_index = i
+            if open_set[i].f == open_set[lowest_f_index].f:
+                if open_set[i].g < open_set[lowest_f_index].g:
+                    lowest_f_index = i
+        current_node = open_set.popleft()
+
+        if current_node == end:
+                
+            for elem in open_set: 
+                if elem.symbol is "B":
+                    continue
+                else:
+                    elem.symbol = 'O'
+            for elem in closed_set:
+                if elem.symbol is "A":
+                    continue
+                else:
+                    elem.symbol = 'C'
+            tmp = current_node
+            path.append(tmp)
+            while tmp.previous:
+                path.append(tmp.previous)
+                tmp = tmp.previous
+            print("FINNISHED")
+
+      #  open_set.remove(current_node)
+        closed_set.append(current_node)
+
+        neighbors = current_node.neighbors
+        for nb in neighbors:
+            if nb in closed_set:
+                continue
+            tmp_g = current_node.g + nb.cost
+
+            if nb not in open_set:
+                open_set.append(nb)
+          
+            elif tmp_g >= nb.g:
+                continue
+            nb.previous = current_node       
+            nb.g = tmp_g     
+            nb.h = calculate_manhattan(nb, end)
+            nb.f = nb.g + nb.h
+
+    for elem in path[1:-1]: #Not redrawing the A and B as I want to see where start and finnish is
+        elem.symbol = '▪'
+
+    redraw_board(board_n)
+    draw_4k(board_n, wait = True)
 
 def draw_4k(board, wait = False):
     root = Tk()
+    c = ['w', 'm', 'f', 'g', 'r', 'A', 'B', '▪' ]
     for i, line in enumerate(board):
         for j, symbol in enumerate(line):
             label = Label(root, text = symbol.symbol)
@@ -208,7 +354,9 @@ def main():
     board = make_board_into_nodes(board_text)
     start, end = find_start_and_end(board)
     draw_4k(board)
-    a_star(start,end,board)
+   # a_star(start,end,board)
+   # dijkstra(start, end, board)
+    bfs(start, end, board)
 
 
 if __name__ == '__main__':
