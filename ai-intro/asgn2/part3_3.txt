@@ -1,0 +1,21 @@
+For the boards with the weights, Dijkstra and A* seems to find the same
+path. This is because they both include cost to the path. My BFS does NOT
+include any cost, therefore it finds the path with the least amount of nodes,
+but with a higher cost since it ignores the values of each node. 
+Both Dijkstra and A* seems to have the same amount of open nodes, +- 1 if
+my counting is correct, but A* have less closed nodes. This can mean that 
+A* reahces the goal in less steps, it doesnt need to evaluate the same amount of 
+nodes as Dijkstra needs to. 
+
+For the boards from part1, the ones with the obstacles but no difference in cost, 
+the paths seems to be very similar as well. Both A* and Dijkstra takes the same path,
+but Dijkstra have way more closed nodes than A*. This means that the heuristic has
+a very big impact on pathfinding when the cost is the same for each node. The G score
+is one higher for each neighbor one step further away from the start, so the A* algorithm 
+needs to check fewer nodes because it has a heuristic. 
+A* has way more open cells at the end than the two other algorithms, and this is because it evaluates
+next move based on fscore and gscore if fscore is equal between nodes. As with Dijkstra
+it only evaluates on gscore and there is a lot of nodes on this map with similar gscore, therefore
+it has fewer open nodes at the end but way more closed nodes. 
+In this case, BFS found a path that is equally long to the other two algorithms in terms of number of steps, 
+but it went in another direction, it went south and then east as the other went north and then east. 
