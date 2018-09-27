@@ -1,3 +1,17 @@
 ai-progg/sentdex
 
 .vscode
+
+*.marius-UX305UA
+
+*.meta
+
+ai-progg/asgn1/netsaver/my_saved_session-0\.index
+
+*.pyc
+
+ai-progg/asgn1/data/__MACOSX/
+
+ai-progg/asgn1/data/mnist-zip/
+
+ai-progg/asgn1/netsaver/
