@@ -1,9 +1,12 @@
 import tensorflow as tf
+import tflowtools as tft
 import numpy as np
 import os
 import math
 import mnist_basics as mn
 import interface_helper as ih
+import random
+import matplotlib.pyplot as PLT
 
 writer = tf.summary.FileWriter("koko")
 
@@ -41,6 +44,10 @@ class NeuralNetModel():
     def add_layer(self, layer): 
         self.layers.append(layer)
 
+    def add_grabvar(self, layer_index, type='wgt'):
+        self.grabvars.append(self.layers[layer_index].getvar(type))
+        self.grabvars_figures.appen(PLT.figure())
+
     def create_model(self):
         '''
         This method initializes the whole model with random weights and biases 
@@ -49,8 +56,8 @@ class NeuralNetModel():
         '''
         num_inputs = self.layer_sizes[0]
         # Placeholders usually x,y but more explainable like this. 
-        self.input = tf.placeholder('float', shape=(None, num_inputs), name="Input")
-        self.target = tf.placeholder('float', shape=(None, 6), name="Target")
+        self.input = tf.placeholder(tf.float64, shape=(None, num_inputs), name="Input")
+
         invar = self.input; insize = num_inputs
         # Build the structure of the neural net
         for i, outsize in enumerate(self.layer_sizes[1:]):
@@ -60,47 +67,70 @@ class NeuralNetModel():
                 layer = Layer(self, i, invar, insize, outsize)
             invar = layer.output; insize = layer.outsize
         self.output = layer.output
+        self.target = tf.placeholder(tf.float64, shape=(None, layer.outsize), name="Target")
         #self.configure_training()
 
     def configure_training(self, loss_function, activation_function, optimizer):
-        print(loss_function)
         self.predictor = self.output # Simpel prediction runs will request the value of outpout neurons
         self.error = ih.gen_loss_function(loss_function, activation_function, self.predictor, self.target) 
         #self.error = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.predictor, labels=self.target))
-
         # Defining the training operator
         #optimizer = tf.train.AdamOptimizer(self.learning_rate)
         optimizer = ih.gen_optimizer(optimizer, self.learning_rate)
         self.trainer = optimizer.minimize(self.error)
         
-    def do_training(self, sess, epochs=10, training_data=None, training_labels=None):
-        #self.error_history = []
+    def do_training(self, sess, cases, hm_epochs=100):
+        self.error_history = []
         sess.run(tf.global_variables_initializer())
         print("Prediction: {}".format(self.predictor))
-
+        ok = int(len(training_data)*0.8)
+        ok2 = int(len(training_data)*0.)
+        t_d = training_data[:ok]
+        t_l = training_labels[:ok]
+        filename = "epoch"
         for epoch in range(epochs):
             epoch_error = 0 
-            mbs_num = 0
-            i = 0; mbs = self.mini_batch_size
-            while i < len(training_data):
+            gvars = [self.error] + self.grabvars
+            mbs = self.mini_batch_size; ncases = len(cases); nmb = math.ceil(ncases/mbs)
+            while i < len(t_d):
                 mini_batch_loss = 0
                 mbs_num += 1
                 start = i
                 end = i + mbs
-                epoch_x = training_data[start:end]
-                epoch_y = training_labels[start:end]
+                epoch_x = t_d[start:end]
+                #if epoch == 1 or epoch == 9:
+                #    if i == 1 or i == 9:
+                #        f = open(filename_n, "a")
+                #        f.write(str(epoch_x[0][0]))
+                #if epoch == 9:
+                #    f = open("epoch9.txt", "a")
+                #    f.write(str(epoch_x[0][0]))
+                epoch_y = t_l[start:end]
+
                 _, c = sess.run([self.trainer, self.error], 
                                 feed_dict={self.input: epoch_x, self.target: epoch_y})
                 mini_batch_loss += c
+                epoch_error += c
                 i += mbs
-                print("Minibatch #{} completed out of {}. Loss: {}".format(mbs_num, math.ceil((len(training_data)/mbs)), mini_batch_loss))
+               # print("Minibatch #{} completed out of {}. Loss: {}".format(mbs_num, math.ceil((len(training_data)/mbs)), mini_batch_loss))
                 #print('Minibatch #', mbs_num, "completed out . Loss:", mini_batch_loss)
+            if epoch % 1000 is 0: 
+                print('Epoch', epoch + 1, 'completed out of', epochs, 'loss:', epoch_error)
+            
+        #correct = tf.equal(tf.argmax(self.predictor, 1), tf.argmax(self.target, 1))
+        correct = tf.nn.in_top_k(tf.cast(self.predictor, tf.float32), [tft.one_hot_to_int(list(v)) for v in self.target] , k=1)
+        accuracy = tf.reduce_mean(tf.cast(correct,'float'), name="XD")
+        print('Accuracy:', accuracy.eval({self.input:training_data[-ok2:], self.target:training_labels[-ok2:]}))    
 
-            correct = tf.equal(tf.argmax(self.predictor, 1), tf.argmax(self.target, 1))
-            accuracy = tf.reduce_mean(tf.cast(correct,'float'))
-            print('Accuracy:', accuracy.eval({self.input:training_data, self.target:training_labels}))    
-         
+        writer.add_graph(sess.graph)
 
+        #self.do_testing(self.sess, training_data, training_labels)
+
+    def do_testing(self, sess, input_data, labels, bestk=None):
+        tmp = zip(input_data, labels)
+        random.shuffle(tmp)
+        inp, lab = zip(*tmp)
+                        
 #region Sentdex style
         # Filtrerer ut de forskjellige layerene: input, hidden og output
         #input_nodes = self.nodes[1]
@@ -143,13 +173,15 @@ class Layer():
         self.build()
 
     def build(self):
-        self.weights = tf.Variable(tf.random_normal([self.insize, self.outsize]), name="Weights")
-        self.biases = tf.Variable(tf.random_normal([self.outsize]), name="Bias")
+        #self.weights = tf.Variable(tf.random_normal([self.insize, self.outsize]), name="Weights")
+        self.weights = tf.Variable(np.random.uniform(-.1, .1, size=(self.insize,self.outsize)), name="Weights")
+        #self.biases = tf.Variable(tf.random_normal([self.outsize]), name="Bias")
+        self.biases = tf.Variable(np.random.uniform(-.1, .1, size=(self.outsize)), name="Biases")
         c = tf.add(tf.matmul(self.input, self.weights), self.biases)
         if not self.out:
             self.output = tf.nn.relu(c)
         else:
-            self.output = c
+            self.output = tf.nn.relu(c)
         self.nn.add_layer(self)
 
 

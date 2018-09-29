@@ -18,7 +18,7 @@ def gen_optimizer(optimizer_name, learning_rate):
         return tf.train.AdagradOptimizer(learning_rate)
     elif optimizer_name is "RMS":
         print("Optimizer: {}".format(optimizer_name))
-        return tf.train.RMSPropOptimizer(learning_rate)
+        return tf.train.RMSPropOptimizer(learning_rate, momentum=1.0)
 
 def gen_loss_function(name, activation_function, prediction, target):
     if activation_function is "softmax":
@@ -26,11 +26,12 @@ def gen_loss_function(name, activation_function, prediction, target):
         if name is "cross_entropy":
             print("Loss function: {}".format(name))
             return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=target))
+           # return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=prediction, labels=target))
         if name is "MSE":
             print("Loss function: {}".format(name))
             prediction = tf.nn.softmax(prediction)
             #return tf.reduce_mean(tf.square(target - prediction))
-            return tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(target, prediction))))
+            return tf.reduce_mean(tf.square(tf.subtract(target, prediction)))
 
 
 
