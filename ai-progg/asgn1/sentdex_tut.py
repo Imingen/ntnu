@@ -70,8 +70,8 @@ def train_neural_network(input_data):
     prediction = neural_network_model(input_data)
    # prediction = tf.nn.softmax(prediction)
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=y))
-
     optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(cost)
+    
 
     hm_epochs = 5 #hm = how many 
 
@@ -91,7 +91,6 @@ def train_neural_network(input_data):
                 epoch_y = train_labels[start:end]
                 _, c = sess.run([optimizer, cost], feed_dict={x: epoch_x, y: epoch_y})
                 epoch_loss += c
-                #print("C:", c)
                 #print("Epoch_loss:", epoch_loss)
                 i += batch_size
             print('Epoch', epoch + 1, 'completed out of', hm_epochs, 'loss:', epoch_loss)

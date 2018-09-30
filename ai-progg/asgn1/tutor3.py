@@ -147,7 +147,7 @@ class Gann():
             sess.probe_stream.add_summary(results[2], global_step=step)
         else:
             results = sess.run([operators, grabbed_vars], feed_dict=feed_dict)
-            print(grabbed_vars)
+            #print(grabbed_vars)
         if show_interval and (step % show_interval == 0):
             self.display_grabvars(results[1], grabbed_vars, step=step)
         return results[0], results[1], sess

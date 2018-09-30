@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+import matplotlib.pyplot as plt
 '''
 This script file is intended to be used to generate TF operators (optimizers, loss functions etc)
 based on the input from the user. 
@@ -32,6 +32,31 @@ def gen_loss_function(name, activation_function, prediction, target):
             prediction = tf.nn.softmax(prediction)
             #return tf.reduce_mean(tf.square(target - prediction))
             return tf.reduce_mean(tf.square(tf.subtract(target, prediction)))
+
+def gen_activation_function(name, layer):
+    if name is "relu":
+        return tf.nn.relu(layer)
+    if name is "tanh":
+        return tf.nn.tanh(layer)
+    if name is "sigmoid":
+        return tf.nn.sigmoid(layer)
+
+def plot_training_history(error_history, validation_history=[]):
+    x_err = [n[0] for n in error_history]
+    y_err = [n[1] for n in error_history]
+
+    if len(validation_history) > 0:
+        x_val = [n[0] for n in validation_history]
+        y_val = [n[1] for n in validation_history]
+        plt.plot(x_val, y_val, label="Validation history")
+
+    plt.plot(x_err,y_err, label="Error history")
+    plt.title("Training History")
+    plt.xlabel("Epoch")
+    plt.ylabel("Error")
+    plt.legend()
+    plt.draw()
+    plt.pause(0.001)
 
 
 
