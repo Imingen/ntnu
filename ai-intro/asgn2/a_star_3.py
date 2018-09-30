@@ -325,6 +325,7 @@ def bfs(start, end, board):
 
             nb.previous = current_node       
             nb.g = tmp_g     
+            # Just commented out this part since we dont use it anyways
           #  nb.h = calculate_manhattan(nb, end)
            # nb.f = nb.g + nb.h
 
