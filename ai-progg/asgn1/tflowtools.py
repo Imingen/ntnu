@@ -334,7 +334,8 @@ def showvars(vals,names=None,msg=""):
 def pp_matrix(m,style='{:.3f}'):
     rows, cols = m.shape
     for r in range(rows):
-        print()  # skips to next line
+        print("\n")  # skips to next line
+        print("Node #", r +1)
         for c in range(cols): print(style.format(m[r][c]), end=' ')
     print()
 

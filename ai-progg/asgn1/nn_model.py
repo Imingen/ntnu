@@ -71,7 +71,6 @@ class NeuralNetModel():
                 layer = Layer(self, i, invar, insize, outsize, output_layer=True) 
             else:
                 layer = Layer(self, i, invar, insize, outsize)
-            print(i)
             invar = layer.output; insize = layer.outsize
         self.output = layer.output
         self.target = tf.placeholder(tf.float64, shape=(None, layer.outsize), name="Target")
@@ -86,30 +85,36 @@ class NeuralNetModel():
         optimizer = ih.gen_optimizer(optimizer, self.learning_rate)
         self.trainer = optimizer.minimize(self.error)
         
-    def do_training(self, sess, cases, hm_epochs=100):
+    def do_training(self, sess, cases, hm_steps=100):
         self.error_history = []
         sess.run(tf.global_variables_initializer())
         print("Prediction: {}".format(self.predictor))
         filename = "epoch"
-        for epoch in range(hm_epochs):
-            epoch_error = 0 
-            step = self.global_training_step + epoch
-            gvars = self.error
-            mbs = self.mini_batch_size; ncases = len(cases); nmb = math.ceil(ncases/mbs)
-            for cstart in range(0, ncases, mbs):
-                end = min(ncases,cstart+mbs) # Do I need MIN here???
-                minibatch = cases[cstart:end]
-                inputs = [c[0] for c in minibatch]; targets = [c[1] for c in minibatch]
-                feeder = {self.input: inputs, self.target: targets}
-                _, c,_ = self.run_one_step([self.trainer], gvars, session=sess,
-                                                feed_dict=feeder)
-                epoch_error += c
-            self.error_history.append((epoch, epoch_error/nmb))
-            self.consider_validation(epoch, sess)
-            if epoch % 7 is 0:
-                print("Epoch #{} out of {} finnished. Loss {}".format(epoch, hm_epochs, epoch_error))
         
-        self.global_training_step += epoch   
+        gvars = self.error
+        mbs = self.mini_batch_size; ncases = len(cases); nmb = math.ceil(hm_steps/mbs)
+        for step in range(hm_steps):
+            error = 0 
+            #step = self.global_training_step + epoch
+            r = random.randint(1, (ncases - mbs))
+            #for cstart in range(0, ncases, mbs):
+           # end = min(ncases,cstart+mbs) # Do I need MIN here???c
+            minibatch = cases[r:r+mbs]
+            
+            inputs = [c[0] for c in minibatch]; targets = [c[1] for c in minibatch]
+            #print("Input:", inputs)
+            #print("Labels:", labels)
+            feeder = {self.input: inputs, self.target: targets}
+            _, c,_ = self.run_one_step([self.trainer], gvars, session=sess,
+                                            step=step, feed_dict=feeder)
+            error += c
+            if step % 10 is 0:
+                self.error_history.append((step, c))# should divide on step????
+            self.consider_validation(step, sess)
+            if step % 100 is 0:
+                print("Step #{} out of {} finnished. Loss {}".format(step, hm_steps, error))
+        
+        self.global_training_step += step   
         ih.plot_training_history(self.error_history, validation_history=self.validation_history)
         
     def do_testing(self, sess, cases, msg="Testing", bestk=None):
@@ -117,6 +122,7 @@ class NeuralNetModel():
         feeder = {self.input: inputs, self.target: targets}
         self.test_func = self.error
         if bestk is not None:
+            print("bestk")
             self.test_func = self.gen_match_counter(self.predictor, [tft.one_hot_to_int(list(v)) for v in targets], k = bestk)
         testres, grabvals, _ = self.run_one_step(self.test_func, self.grabvars, session=sess,
                                     feed_dict=feeder)
@@ -131,22 +137,30 @@ class NeuralNetModel():
         return testres
 
     def do_mapping(self, sess, cases, msg="Mapping"):
-        self.add_grabvar(0, "wgt")
-        c = cases[:10]       
+
+        self.add_grabvar(0, "in")
+        self.add_grabvar(0, "out")
+        self.add_grabvar(1, "in")
+        self.add_grabvar(1, "out")
+        c = cases[:10]  
         inputs = [n[0] for n in c]
         targets = [n[1] for n in c]
         feeder = {self.input: inputs, self.target: targets}
-        tot = 0
-        for case in c:
-            
-            res, grabs,_ = self.run_one_step(self.predictor, self.grabvars, session=sess, feed_dict=feeder)
+        #for i, case in enumerate(c): 
+        #x = sess.run([self.predictor, self.grabvars], feed_dict=feeder)
+        res, grabs,_ = self.run_one_step(self.predictor, self.grabvars, session=sess, feed_dict=feeder)
+        self.x = grabs
         self.display_grabvars(grabs, self.grabvars, step=1)
+
+
+
 
     def display_grabvars(self, grabbed_vals, grabbed_vars, step=1):
         name = [x.name for x in grabbed_vars]
         msg = "Grabbed variables at step " + str(step)
         fig_index = 0
         for i, v in enumerate(grabbed_vals):
+            #print("V: ", v)
             if type(v) == np.ndarray and len(v.shape) > 1:
                 tft.hinton_plot(v, fig=self.grabvars_figures[fig_index], 
                                 title= name[i] + " at step " + str(step))
@@ -192,11 +206,13 @@ class NeuralNetModel():
         return results[0], results[1], sess
 
 
-    def run(self, epochs=100, sess=None, bestk=None):
-        self.training_session(epochs, sess=sess)
+    def run(self, steps=100, sess=None, bestk=None):
+        self.training_session(steps, sess=sess)
         self.test_on_trains(sess=self.current_session,bestk=bestk) 
         self.testing_session(sess=self.current_session,bestk=bestk)
         self.do_mapping(self.current_session, self.case_manager.get_testing_cases())
+       # tft.pp_matrix(self.x[3])
+        #print("grabs2: ", self.x)
         tft.close_session(self.current_session, False)
 
 

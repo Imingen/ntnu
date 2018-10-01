@@ -80,41 +80,31 @@ def parity():
     return input_data, labels
 
 
-layers = [10, 30, 11] # Set up as a array where each index is the size of that layer.
+layers = [15, 45, 25, 16] # Set up as a array where each index is the size of that layer.
 hl_activation_function = 'relu'
 ol_activation_function = 'softmax' #String: "softmax"
-loss_function = "MSE" #String: "MSE" or "cross_entropy"
-learning_rate = 0.5
-optimizer = "GDS" #One of these: "GDS", "ADAM", "Adagrad", "RMS" as a string
-mini_batch_size = 20
-weight_range = [-0.1, 0.1] # Lower and upper bound
-validation_interval = 10
+loss_function = "cross_entropy" #String: "MSE" or "cross_entropy"
+learning_rate = 0.004
+optimizer = "ADAM" #One of these: "GDS", "ADAM", "Adagrad", "RMS" as a string
+mini_batch_size = 300
+hm_times = 300
+weight_range = [-0.01, 0.01] # Lower and upper bound
+validation_interval = 20
 
-c_gen = (lambda: tft.gen_vector_count_cases(500,10))
+c_gen = (lambda: tft.gen_vector_count_cases(500,15))
+#c_gen = (lambda: tft.gen_all_parity_cases(10))
 #c_gen = (lambda: data_loader("/home/marius/ntnu/ai-progg/asgn1/data/wine.txt"))
+#c_gen = (lambda: tft.gen_all_bit_vectors(4))
 cman = nn_model.CaseManager(c_gen, vfrac=0.1, tfrac=0.1)
-#print(len(cman.get_training_cases()))
 
-#print(cman.get_training_cases())
-#feature_scale(input_data)
 
 def main_event():
     with tf.Session() as sess:
         neural_net = nn_model.NeuralNetModel(layers, cman, weight_range, hl_activation_function, validation_interval, mini_batch_size=mini_batch_size, learning_rate=learning_rate, sess = sess)
         neural_net.configure_training(loss_function, ol_activation_function,  optimizer)
-        neural_net.run(epochs=5000,bestk=1)
-        # Next --> do_mapping
-        # Mapping needs:
-        #   * X amount of cases to be run through the neural net after training with 
-        #     learning turned OFF
-        #   * Set of layers to be displayed for each case
+        neural_net.run(steps=hm_times,bestk=1)
         
-
 if __name__ == "__main__":
     main_event()
     input("Press [enter] to continue.")
-    #parity()
-  #  data_path = "/home/marius/ntnu/ai-progg/asgn1/data/wine.txt"
-    #data_loader(data_path)
-
-
+    

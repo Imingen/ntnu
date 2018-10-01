@@ -1,0 +1,18 @@
+gen_vector_count_cases(500, 15)
+    layers[15,45,16]
+    activation: relu
+    output_activation: softmax
+    loss function: cross entropy
+    l-rate: 0.001
+    optimizer: Adama
+    Mbatch size: 10
+    weight range: -0.01 - 0.01
+    validation interall 10
+    vfrac :0.1
+    tfrac: 0.1
+    epochs: 400
+
+
+
+
+
