@@ -26,35 +26,16 @@ gen_all_party_cases(10)
     vfrac :0.1
     tfrac: 0.1
 
-gen_symvect_dataset(101, 2000)
-    layers[101, 50, 2]
+gen_all_party_cases(10)
+    layers[10, 80, 2]
     activation: relu 
     output_activation: softmax
     loss function: MSE
-    l-rate: 0.5
+    l-rate: 0.2
     optimizer: GDS
-    Mbatch size: 40
-    hm_times: 2000
+    Mbatch size: 150
+    hm_times: 7000
     weight range: -0.1 - 0.1
     validation interall 10
     vfrac :0.1
     tfrac: 0.1
-
-Wine Quality
-    layers[11,100,90,40,6]
-    activation: relu 
-    output_activation: softmax
-    loss function: cross_entropy
-    l-rate: 0.01
-    optimizer: ADAM
-    Mbatch size: 50
-    hm_times: 4000
-    weight range: -0.01 - 0.01
-    validation interall 10
-    vfrac :0.1
-    tfrac: 0.1
-
-
-
-
-

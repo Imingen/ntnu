@@ -166,6 +166,13 @@ def gen_symvect_dataset(vlen,count):
     s1 = math.floor(count/2); s2 = count - s1
     cases = gen_symvect_cases(vlen,s1) + gen_anti_symvect_cases(vlen,s2)
     NPR.shuffle(cases)
+    inp = [n[:vlen] for n in cases]
+    labels = [n[-1:] for n in cases]
+    labels_2 = []
+    for i,l in enumerate(labels):
+       labels_2.append(int_to_one_hot(labels[i][0], 2 ))
+    
+    cases = [[i, l] for i, l in zip(inp, labels_2)]
     return cases
 
 # ****** LINES (horiz and vert) in arrays *********

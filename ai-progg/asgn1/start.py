@@ -46,10 +46,41 @@ def data_loader(filename):
     feature_scale(lines)
     return [[x, y] for x, y in zip(lines, labels2)]
    
+
+def data_loader2(filename):
+    '''
+    This will load the other data files 
+    '''
+    data_file = open(filename, 'r')
+    data = data_file.read().split('\n')
+    lines = []
+    labels = []
+    for i, l in enumerate(data):
+        single_line = l.split(',')
+        sl_float = [float(x) for x in single_line]
+        lines.append(sl_float[:-1])
+        labels.append(sl_float[-1])
+
+    
+    labels2 = [] 
+    for label in labels:
+        label = int(label)
+        if label < 5:
+            x = one_hot_encoder(label, 6, offset=1)
+        if label > 4:
+            x = one_hot_encoder(label, 6, offset=2)
+        labels2.append(x)
+    feature_scale(lines)
+    return [[x, y] for x, y in zip(lines, labels2)]
+
 def one_hot_encoder(k, size, off_val=0.0, on_val=1.0, floats=False, offset=0):
     v = [off_val] * size
     v[k - offset] = on_val
     return v
+
+def gen_many_onehot_cases(hm):
+    for i in range(hm):
+        return [[c,c] for c in tft.all_one_hots(8)]
 
 def feature_scale(d):
     mean = np.mean(d, 0)
@@ -79,23 +110,27 @@ def parity():
     print(input_data)
     return input_data, labels
 
-
-layers = [15, 45, 25, 16] # Set up as a array where each index is the size of that layer.
+#
+layers = [9,20,40,50,100,50,40,20,6] # Set up as a array where each index is the size of that layer.
 hl_activation_function = 'relu'
 ol_activation_function = 'softmax' #String: "softmax"
 loss_function = "cross_entropy" #String: "MSE" or "cross_entropy"
-learning_rate = 0.004
+learning_rate = 0.001
 optimizer = "ADAM" #One of these: "GDS", "ADAM", "Adagrad", "RMS" as a string
-mini_batch_size = 300
-hm_times = 300
-weight_range = [-0.01, 0.01] # Lower and upper bound
-validation_interval = 20
+mini_batch_size = 1
+hm_times = 71
+weight_range = [-.1, .1] # Lower and upper bound
+validation_interval = 5
 
-c_gen = (lambda: tft.gen_vector_count_cases(500,15))
-#c_gen = (lambda: tft.gen_all_parity_cases(10))
-#c_gen = (lambda: data_loader("/home/marius/ntnu/ai-progg/asgn1/data/wine.txt"))
+#c_gen = (lambda: tft.gen_segmented_vector_cases(25, 1000, 0, 8))
+c_gen = (lambda: data_loader2("/home/marius/ntnu/ai-progg/asgn1/data/glass.txt"))
 #c_gen = (lambda: tft.gen_all_bit_vectors(4))
-cman = nn_model.CaseManager(c_gen, vfrac=0.1, tfrac=0.1)
+cman = nn_model.CaseManager(c_gen, vfrac=0.15, tfrac=0.15)
+#x = cman.get_training_cases()
+#print(x[:3], "\n")
+#for i in x:
+#  print(i)
+#  print(len(x))
 
 
 def main_event():

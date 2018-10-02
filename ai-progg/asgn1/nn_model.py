@@ -96,7 +96,7 @@ class NeuralNetModel():
         for step in range(hm_steps):
             error = 0 
             #step = self.global_training_step + epoch
-            r = random.randint(1, (ncases - mbs))
+            r = random.randint(0, (ncases - mbs))
             #for cstart in range(0, ncases, mbs):
            # end = min(ncases,cstart+mbs) # Do I need MIN here???c
             minibatch = cases[r:r+mbs]
@@ -105,11 +105,12 @@ class NeuralNetModel():
             #print("Input:", inputs)
             #print("Labels:", labels)
             feeder = {self.input: inputs, self.target: targets}
-            _, c,_ = self.run_one_step([self.trainer], gvars, session=sess,
-                                            step=step, feed_dict=feeder)
+            #_, c,_ = self.run_one_step([self.trainer], gvars, session=sess,
+            #                                step=step, feed_dict=feeder)
+            _,c = sess.run([self.trainer, self.error], feed_dict=feeder)
             error += c
-            if step % 10 is 0:
-                self.error_history.append((step, c))# should divide on step????
+            
+            self.error_history.append((step, error))
             self.consider_validation(step, sess)
             if step % 100 is 0:
                 print("Step #{} out of {} finnished. Loss {}".format(step, hm_steps, error))
@@ -117,20 +118,22 @@ class NeuralNetModel():
         self.global_training_step += step   
         ih.plot_training_history(self.error_history, validation_history=self.validation_history)
         
-    def do_testing(self, sess, cases, msg="Testing", bestk=None):
+    def do_testing(self, sess, cases, msg="Testing", bestk=None, aa=False):
         inputs = [c[0] for c in cases]; targets = [c[1] for c in cases]
         feeder = {self.input: inputs, self.target: targets}
         self.test_func = self.error
-        if bestk is not None:
+        if bestk is not None and not aa:
             print("bestk")
             self.test_func = self.gen_match_counter(self.predictor, [tft.one_hot_to_int(list(v)) for v in targets], k = bestk)
-        testres, grabvals, _ = self.run_one_step(self.test_func, self.grabvars, session=sess,
-                                    feed_dict=feeder)
+        testres = sess.run([self.test_func], feed_dict=feeder)
+        #print(testres)
+        #self.run_one_step(self.test_func, self.grabvars, session=sess,
+        #                            feed_dict=feeder)
         if bestk is None:
             h = 1
-            #print('{} Set Error = {}'.format(msg, testres))
+           # print('{} Set Error = {}'.format(msg, testres))
         else:
-            print('%s Set Correct Classifications = %f %%' % (msg, 100*(testres/len(cases))))
+            print('%s Set Correct Classifications = %f %%' % (msg, 100*(testres[0]/len(cases))))
             # print("{} Set Correct Classifications = {}{}".format(msg, 100*(testres/len(cases))))
            # print("cases",len(cases))
            # print("XD")
@@ -139,17 +142,20 @@ class NeuralNetModel():
     def do_mapping(self, sess, cases, msg="Mapping"):
 
         self.add_grabvar(0, "in")
-        self.add_grabvar(0, "out")
-        self.add_grabvar(1, "in")
-        self.add_grabvar(1, "out")
-        c = cases[:10]  
+        #self.add_grabvar(0, "out")
+        self.add_grabvar(2, "wgt")
+        self.add_grabvar(2, "out")
+        c = cases[:3]  
         inputs = [n[0] for n in c]
+        print("inputs:", inputs)
         targets = [n[1] for n in c]
+        print("targets:", targets)
         feeder = {self.input: inputs, self.target: targets}
         #for i, case in enumerate(c): 
         #x = sess.run([self.predictor, self.grabvars], feed_dict=feeder)
         res, grabs,_ = self.run_one_step(self.predictor, self.grabvars, session=sess, feed_dict=feeder)
         self.x = grabs
+        print(grabs)
         self.display_grabvars(grabs, self.grabvars, step=1)
 
 
@@ -197,7 +203,7 @@ class NeuralNetModel():
                     feed_dict=None, step=1):
         sess = session if session else tft.gen_initialized_session(dir=dir)
 #        print("OP:", operators)
-#        print("gvars_1step:", grabbed_vars)
+        print("gvars_1step:", grabbed_vars)
 
         results = sess.run([operators, grabbed_vars], feed_dict=feed_dict)
 #        print("results[0]", results[0])
@@ -292,8 +298,9 @@ class CaseManager():
     def organize_cases(self):
         ca = np.array(self.cases)
         np.random.shuffle(ca)
-        sep1 = round(len(self.cases) * self.training_fraction)
-        sep2 = sep1 + round(len(self.cases) * self.validation_fraction)
+
+        sep1 = round(len(ca) * self.training_fraction)
+        sep2 = sep1 + round(len(ca) * self.validation_fraction)
         self.training_cases = ca[0:sep1]
         self.validation_cases = ca[sep1:sep2]
         self.testing_cases = ca[sep2:]
@@ -303,11 +310,6 @@ class CaseManager():
     def get_testing_cases(self): return self.testing_cases
 
 
-if __name__ == "__main__":
-    with tf.Session() as sess:
-        nn = NeuralNetModel([784, 200, 200, 200, 10], 128, learning_rate=0.1, sess=sess)
-        nn.do_training(sess)
-        writer.add_graph(sess.graph)
 
 
 

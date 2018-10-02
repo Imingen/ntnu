@@ -48,9 +48,9 @@ def plot_training_history(error_history, validation_history=[]):
     if len(validation_history) > 0:
         x_val = [n[0] for n in validation_history]
         y_val = [n[1] for n in validation_history]
-        plt.plot(x_val, y_val, label="Validation history")
+        plt.plot(x_val, y_val,label="Validation history", zorder=3)
 
-    plt.plot(x_err,y_err, label="Error history")
+    plt.plot(x_err,y_err, linewidth=1, label="Error history", zorder=2)
     plt.title("Training History")
     plt.xlabel("Epoch")
     plt.ylabel("Error")
