@@ -54,6 +54,28 @@ Wine Quality
     vfrac :0.1
     tfrac: 0.1
 
+Mnist
+    layers[784,150,10]
+    activation: relu 
+    output_activation: softmax
+    loss function: cross_entropy
+    l-rate: 0.001
+    optimizer: ADAM
+    Mbatch size: 64
+    hm_times: 1000
+    weight range: -0.1 - 0.1
+    validation interall 5
+    vfrac :0.1
+    tfrac: 0.1
+    case_frac: 10000
+
+
+
+
+
+
+
+
 
 
 

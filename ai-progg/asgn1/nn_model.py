@@ -8,24 +8,7 @@ import interface_helper as ih
 import random
 import matplotlib.pyplot as PLT
 
-writer = tf.summary.FileWriter("koko")
-
-images_raw, labels_raw = mn.load_mnist()
-
-images = []
-labels = []
-
-for image in images_raw:
-    t = np.reshape(image, (784))
-    images.append(t)
-
-for label in labels_raw:
-    one_hot = np.zeros(10)
-    label_value = label[0]
-    one_hot[label_value] = 1
-    labels.append(one_hot)
-
-
+writer = tf.summary.FileWriter("myView")
 
 class NeuralNetModel():
     '''
@@ -37,14 +20,14 @@ class NeuralNetModel():
         self.learning_rate = learning_rate
         self.grabvars = [] # Variables to be monitored (FOR TENSORBOARD????)
         self.grabvars_figures = [] # One matplotlib figure for each grabvar
-        self.layers = []
+        self.layers = [] # Layers e.g modules 
         self.global_training_step = 0
-        self.case_manager = cman
-        self.weight_range = wr
-        self.activation_function = hl_func
-        self.validation_interval = vint
-        self.validation_history = []
-        self.sess = sess
+        self.case_manager = cman #case manager easily handles dividing the dataset and shuffling it
+        self.weight_range = wr # Initial weight range of the random weights. Used when building the neural net
+        self.activation_function = hl_func # Hidden layer activation fucntion 
+        self.validation_interval = vint # How often to run validation during trainign
+        self.validation_history = [] # Error history of all validation runs
+        self.sess = sess 
         self.create_model()
 
     def add_layer(self, layer): 
@@ -66,56 +49,54 @@ class NeuralNetModel():
 
         invar = self.input; insize = num_inputs
         # Build the structure of the neural net
+        # I add a value of outputlayer = true so that the hidden layer optimizer is not applied to the output 
+        # layer. 
         for i, outsize in enumerate(self.layer_sizes[1:]):
             if i == (len(self.layer_sizes[1:]) - 1):
                 layer = Layer(self, i, invar, insize, outsize, output_layer=True) 
             else:
                 layer = Layer(self, i, invar, insize, outsize)
             invar = layer.output; insize = layer.outsize
-        self.output = layer.output
+        # The last layer is also the output layer/last layer of the whole neural network    
+        self.output = layer.output        
         self.target = tf.placeholder(tf.float64, shape=(None, layer.outsize), name="Target")
-        #self.configure_training()
+
 
     def configure_training(self, loss_function, ol_func, optimizer):
-        self.predictor = self.output # Simpel prediction runs will request the value of outpout neurons
+        self.predictor = self.output
+        # Calculate loss 
         self.error = ih.gen_loss_function(loss_function, ol_func, self.predictor, self.target) 
-        #self.error = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.predictor, labels=self.target))
-        # Defining the training operator
-        #optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        # Generate an optimizer 
         optimizer = ih.gen_optimizer(optimizer, self.learning_rate)
         self.trainer = optimizer.minimize(self.error)
         
     def do_training(self, sess, cases, hm_steps=100):
         self.error_history = []
         sess.run(tf.global_variables_initializer())
-        print("Prediction: {}".format(self.predictor))
-        filename = "epoch"
-        
         gvars = self.error
         mbs = self.mini_batch_size; ncases = len(cases); nmb = math.ceil(hm_steps/mbs)
+        # Would like to use epochs instead but assignment ask for steps
+        # This runs a random minibatch of size N through the network 
         for step in range(hm_steps):
             error = 0 
-            #step = self.global_training_step + epoch
+            # Find a random integer between 0 and number of cases - mini batch size
+            # so that we dont go out of bounce
             r = random.randint(0, (ncases - mbs))
-            #for cstart in range(0, ncases, mbs):
-           # end = min(ncases,cstart+mbs) # Do I need MIN here???c
             minibatch = cases[r:r+mbs]
             
             inputs = [c[0] for c in minibatch]; targets = [c[1] for c in minibatch]
-            #print("Input:", inputs)
-            #print("Labels:", labels)
             feeder = {self.input: inputs, self.target: targets}
-            #_, c,_ = self.run_one_step([self.trainer], gvars, session=sess,
-            #                                step=step, feed_dict=feeder)
             _,c = sess.run([self.trainer, self.error], feed_dict=feeder)
-            error += c
-            
-            self.error_history.append((step, error))
+            #error += c            
+            self.error_history.append((step, c))
             self.consider_validation(step, sess)
             if step % 100 is 0:
-                print("Step #{} out of {} finnished. Loss {}".format(step, hm_steps, error))
-        
-        self.global_training_step += step   
+                print("Step #{} out of {} finnished. Loss {}".format(step, hm_steps, c))
+            self.global_training_step += 1  
+
+        #The prediction/output layer has never really applied softmax to it for later use
+        # I use softmax when calculating error, but I never set it so I set it here so it is set for testing 
+        self.predictor = tf.nn.softmax(self.predictor)
         ih.plot_training_history(self.error_history, validation_history=self.validation_history)
         
     def do_testing(self, sess, cases, msg="Testing", bestk=None, aa=False):
@@ -123,10 +104,8 @@ class NeuralNetModel():
         feeder = {self.input: inputs, self.target: targets}
         self.test_func = self.error
         if bestk is not None and not aa:
-            print("bestk")
             self.test_func = self.gen_match_counter(self.predictor, [tft.one_hot_to_int(list(v)) for v in targets], k = bestk)
         testres = sess.run([self.test_func], feed_dict=feeder)
-        #print(testres)
         #self.run_one_step(self.test_func, self.grabvars, session=sess,
         #                            feed_dict=feeder)
         if bestk is None:
@@ -135,38 +114,23 @@ class NeuralNetModel():
         else:
             print('%s Set Correct Classifications = %f %%' % (msg, 100*(testres[0]/len(cases))))
             # print("{} Set Correct Classifications = {}{}".format(msg, 100*(testres/len(cases))))
-           # print("cases",len(cases))
-           # print("XD")
         return testres
 
-    def do_mapping(self, sess, cases, msg="Mapping"):
-
-        self.add_grabvar(0, "in")
-        #self.add_grabvar(0, "out")
-        self.add_grabvar(2, "wgt")
-        self.add_grabvar(2, "out")
-        c = cases[:3]  
+    def do_mapping(self, sess, msg="Mapping", size=0, layers=None):
+        c = self.case_manager.get_training_cases()
+        c = c[:size] 
+        for i in range(len(layers)): 
+            self.add_grabvar(layers[i][0], layers[i][1])
         inputs = [n[0] for n in c]
-        print("inputs:", inputs)
         targets = [n[1] for n in c]
-        print("targets:", targets)
         feeder = {self.input: inputs, self.target: targets}
-        #for i, case in enumerate(c): 
-        #x = sess.run([self.predictor, self.grabvars], feed_dict=feeder)
         res, grabs,_ = self.run_one_step(self.predictor, self.grabvars, session=sess, feed_dict=feeder)
-        self.x = grabs
-        print(grabs)
-        self.display_grabvars(grabs, self.grabvars, step=1)
-
-
-
+        self.display_grabvars(grabs, self.grabvars,  step=self.global_training_step)
 
     def display_grabvars(self, grabbed_vals, grabbed_vars, step=1):
         name = [x.name for x in grabbed_vars]
-        msg = "Grabbed variables at step " + str(step)
         fig_index = 0
         for i, v in enumerate(grabbed_vals):
-            #print("V: ", v)
             if type(v) == np.ndarray and len(v.shape) > 1:
                 tft.hinton_plot(v, fig=self.grabvars_figures[fig_index], 
                                 title= name[i] + " at step " + str(step))
@@ -191,7 +155,6 @@ class NeuralNetModel():
     def test_on_trains(self,sess,bestk=None):
         self.do_testing(sess, self.case_manager.get_training_cases(), msg="Total Training", bestk=bestk)
 
-
     def consider_validation(self, epoch, sess):
         if self.validation_interval and (epoch % self.validation_interval == 0):
             cases = self.case_manager.get_validation_cases()
@@ -202,27 +165,18 @@ class NeuralNetModel():
     def run_one_step(self, operators, grabbed_vars=None, dir='test_dir', session=None,
                     feed_dict=None, step=1):
         sess = session if session else tft.gen_initialized_session(dir=dir)
-#        print("OP:", operators)
-        print("gvars_1step:", grabbed_vars)
-
         results = sess.run([operators, grabbed_vars], feed_dict=feed_dict)
-#        print("results[0]", results[0])
-#        print("results[1]", results[1])
-
         return results[0], results[1], sess
 
 
-    def run(self, steps=100, sess=None, bestk=None):
+    def run(self, steps=100, sess=None, bestk=None, map_bsize=0, map_layers=None):
         self.training_session(steps, sess=sess)
         self.test_on_trains(sess=self.current_session,bestk=bestk) 
         self.testing_session(sess=self.current_session,bestk=bestk)
-        self.do_mapping(self.current_session, self.case_manager.get_testing_cases())
-       # tft.pp_matrix(self.x[3])
-        #print("grabs2: ", self.x)
+        # Do map test if map batch size is > 0
+        if map_bsize is not 0:
+            self.do_mapping(self.current_session, size=map_bsize, layers=map_layers)
         tft.close_session(self.current_session, False)
-
-
-
 
 
 #region Sentdex style
@@ -272,9 +226,9 @@ class Layer():
 
     def build(self):
         #self.weights = tf.Variable(tf.random_normal([self.insize, self.outsize],  seed=1), name="Weights")
-        self.weights = tf.Variable(np.random.uniform(self.nn.weight_range[0], self.nn.weight_range[1], size=(self.insize,self.outsize)), name="Weights")
+        self.weights = tf.Variable(np.random.uniform(self.nn.weight_range[0], self.nn.weight_range[1], size=(self.insize,self.outsize)), name=self.name+"-weights")
         #self.biases = tf.Variable(tf.random_normal([self.outsize], seed=1), name="Bias")
-        self.biases = tf.Variable(np.random.uniform(-.1, .1, size=(self.outsize)), name="Biases")
+        self.biases = tf.Variable(np.random.uniform(-.1, .1, size=(self.outsize)), name=self.name+"-biases")
         c = tf.add(tf.matmul(self.input, self.weights), self.biases)
         if not self.out:
             self.output = ih.gen_activation_function(self.nn.activation_function, c)
@@ -282,10 +236,16 @@ class Layer():
             self.output = c
         self.nn.add_layer(self)
 
-class CaseManager():
 
-    def __init__(self,cfunc, vfrac=0,tfrac=0):
+class CaseManager():
+    """
+    A class for handling cases
+    Taken from tutor3.py, but modified for my own usage
+    This version also handles taking a fraction of size N of the whole dataset if it is specified. 
+    """
+    def __init__(self,cfunc, case_frac=1.0, vfrac=0,tfrac=0):
         self.casefunc = cfunc
+        self.case_fraction = case_frac
         self.validation_fraction = vfrac
         self.test_traction = tfrac
         self.training_fraction = 1 - (vfrac + tfrac)
@@ -296,9 +256,11 @@ class CaseManager():
         self.cases = self.casefunc()
     
     def organize_cases(self):
-        ca = np.array(self.cases)
-        np.random.shuffle(ca)
-
+        c = np.array(self.cases)
+        np.random.shuffle(c)
+        cf = int(self.case_fraction * len(c))
+        ca = c[:cf]
+        print(len(ca))
         sep1 = round(len(ca) * self.training_fraction)
         sep2 = sep1 + round(len(ca) * self.validation_fraction)
         self.training_cases = ca[0:sep1]
@@ -308,7 +270,6 @@ class CaseManager():
     def get_training_cases(self): return self.training_cases
     def get_validation_cases(self): return self.validation_cases
     def get_testing_cases(self): return self.testing_cases
-
 
 
 
