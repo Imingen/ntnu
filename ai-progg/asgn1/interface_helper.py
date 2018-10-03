@@ -24,16 +24,16 @@ def gen_optimizer(optimizer_name, learning_rate):
         return tf.train.RMSPropOptimizer(learning_rate, name="RMS")
 
 def gen_loss_function(name, activation_function, prediction, target):
-    if activation_function is "softmax":
-        print("Output layer activation function: {}".format(activation_function))
-        if name is "cross_entropy":
-            print("Loss function: {}".format(name))
-            return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=target),  name="cross_entropy")
-           # return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=prediction, labels=target))
-        if name is "MSE":
-            print("Loss function: {}".format(name))
+    print("Output layer activation function: {}".format(activation_function))
+    if name is "cross_entropy":
+        print("Loss function: {}".format(name))
+        return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=target),  name="cross_entropy")
+        # return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=prediction, labels=target))
+    if name is "MSE":
+        print("Loss function: {}".format(name))
+        if activation_function is "softmax":
             prediction = tf.nn.softmax(prediction)
-            return tf.reduce_mean(tf.square(tf.subtract(target, prediction)), name="MSE")
+        return tf.reduce_mean(tf.square(tf.subtract(target, prediction)), name="MSE")
 
 def gen_activation_function(name, layer):
     if name is "relu":
@@ -109,7 +109,7 @@ def load_data(filename, one_hot_size, delim=';', offset=0, fscale=True):
         x = one_hot_encoder(label, one_hot_size, offset=offset)
         labels2.append(x)
     if fscale:
-        feature_scale(lines)
+        feature_scale_v2(lines)
     return [[x, y] for x, y in zip(lines, labels2)]
 
 def load_glass(filename, fscale=True):
@@ -126,7 +126,6 @@ def load_glass(filename, fscale=True):
         sl_float = [float(x) for x in single_line]
         lines.append(sl_float[:-1])
         labels.append(sl_float[-1])
-
     labels2 = [] 
     for label in labels:
         label = int(label)
@@ -144,11 +143,12 @@ def feature_scale(d):
     Feature scaling function as described in the assignment spec. 
     Input is the features to be scale i.e a matrix 
     """
-    mean = np.mean(d, 0)
-    var = np.std(d, 0)
+    mean = np.mean(d,1)
+    var = np.std(d,1)
     for i, elg in enumerate(d):
-        for j, elem in enumerate(elg):
-            d[i][j] =  (d[i][j] - mean[j]) / var[j]
+        d[i] =  (d[i] - mean[i]) / var[i]
+        #for j, elem in enumerate(elg):
+        #    d[i][j] =  (d[i][j] - mean[j]) / var[j]
 
 def feature_scale_v2(d):
     """
@@ -156,14 +156,17 @@ def feature_scale_v2(d):
     this one scales the features between 0 and 1.
     Input is the features to be scales i.e a matrix
     """
-    max = np.max(d, axis=0)
-    min = np.amin(d, axis=0)
+    max = np.max(d, axis=1)
+    min = np.amin(d, axis=1)
     for i, elg in enumerate(d):
-        for j, elem in enumerate(elg):
-            d[i][j] = (d[i][j] - min[j]) / (max[j] - min[j])
+        d[i] = (d[i] - min[i]) / (max[i] - min[i])
+        
+        #for j, elem in enumerate(elg):
+        #    d[i][j] = (d[i][j] - min[j]) / (max[j] - min[j])
 
 def feature_scale_mnist(d):
     max = np.max(d, axis=1)
+    print(len(max))
     min = np.amin(d, axis=1)
     for i, elg in enumerate(d):
         d[i] = (d[i] - min[i]) / (max[i] - min[i])
@@ -180,3 +183,4 @@ def one_hot_encoder(k, size, off_val=0.0, on_val=1.0, floats=False, offset=0):
     v = [off_val] * size
     v[k - offset] = on_val
     return v
+

@@ -75,6 +75,10 @@ class NeuralNetModel():
         sess.run(tf.global_variables_initializer())
         gvars = self.error
         mbs = self.mini_batch_size; ncases = len(cases); nmb = math.ceil(hm_steps/mbs)
+
+
+
+
         # Would like to use epochs instead but assignment ask for steps
         # This runs a random minibatch of size N through the network 
         for step in range(hm_steps):
@@ -98,6 +102,7 @@ class NeuralNetModel():
         # I use softmax when calculating error, but I never set it so I set it here so it is set for testing 
         self.predictor = tf.nn.softmax(self.predictor)
         ih.plot_training_history(self.error_history, validation_history=self.validation_history)
+
         
     def do_testing(self, sess, cases, msg="Testing", bestk=None, aa=False):
         inputs = [c[0] for c in cases]; targets = [c[1] for c in cases]
@@ -115,6 +120,19 @@ class NeuralNetModel():
             print('%s Set Correct Classifications = %f %%' % (msg, 100*(testres[0]/len(cases))))
             # print("{} Set Correct Classifications = {}{}".format(msg, 100*(testres/len(cases))))
         return testres
+
+
+    def display_weights_and_biases(self, sess, layers=None):
+        c = self.case_manager.get_testing_cases()
+        c = c[:1]
+        for i in range(len(layers)):
+            self.add_grabvar(layers[i][0], layers[i][1])
+       
+        inputs = [n[0] for n in c]
+        targets = [n[1] for n in c]
+        feeder = {self.input: inputs, self.target:targets}
+        res, grabs = sess.run([self.predictor, self.grabvars], feed_dict=feeder)
+        self.display_grabvars(grabs, self.grabvars, self.global_training_step)
 
     def do_mapping(self, sess, msg="Mapping", size=0, layers=None):
         c = self.case_manager.get_training_cases()
@@ -134,7 +152,10 @@ class NeuralNetModel():
             if type(v) == np.ndarray and len(v.shape) > 1:
                 tft.hinton_plot(v, fig=self.grabvars_figures[fig_index], 
                                 title= name[i] + " at step " + str(step))
-                fig_index += 1
+            else:
+                v = np.array([v])
+                tft.hinton_plot(v, fig=self.grabvars_figures[fig_index], title=name[i] + "at step" + str(step))
+            fig_index += 1
 
 
     def gen_match_counter(self, logits, labels, k=1):
@@ -169,14 +190,17 @@ class NeuralNetModel():
         return results[0], results[1], sess
 
 
-    def run(self, steps=100, sess=None, bestk=None, map_bsize=0, map_layers=None):
+    def run(self, steps=100, sess=None, bestk=None, map_bsize=0, map_layers=None, show_wb=False, wb=None):
         self.training_session(steps, sess=sess)
+        if show_wb:
+            self.display_weights_and_biases(sess=self.current_session, layers=wb)
         self.test_on_trains(sess=self.current_session,bestk=bestk) 
         self.testing_session(sess=self.current_session,bestk=bestk)
         # Do map test if map batch size is > 0
         if map_bsize is not 0:
             self.do_mapping(self.current_session, size=map_bsize, layers=map_layers)
         tft.close_session(self.current_session, False)
+
 
 
 #region Sentdex style
