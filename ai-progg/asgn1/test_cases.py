@@ -195,14 +195,14 @@ def wine_quality_test(map_size=0, map_layers=None, display_wb=False, wb=None):
         neural_net.run(steps=hm_times,bestk=1, map_bsize=map_bsize, map_layers=map_layers, show_wb=display_wb, wb=wb_to_show)
               
 def yeast_test(map_size=0, map_layers=None, display_wb=False, wb=None):
-    layers = [8,100,40, 30,10] # Set up as a array where each index is the size of that layer.
+    layers = [8,100,80,10] # Set up as a array where each index is the size of that layer.
     hl_activation_function = 'relu'
     ol_activation_function = 'softmax' 
     loss_function = "MSE" #String: "MSE" or "cross_entropy"
     learning_rate = 0.01
     optimizer = "ADAM" #"GDS", "ADAM", "Adagrad", "RMS" as a string
     mini_batch_size = 32
-    hm_times = 1000
+    hm_times = 8000
     weight_range = [-.1, .1] # Lower and upper bound
     validation_interval = 1
     c_gen = (lambda: ih.load_data("/home/marius/ntnu/ai-progg/asgn1/data/yeast.txt",10, offset=1,delim=","))

@@ -56,9 +56,8 @@ if __name__ == "__main__":
     #tc.mnist_test()
     #tc.vector_count_test()
     #tc.parity_test()
-    #tc.symmetry_test()
-    tc.symmetry_test(3,[[0, "out"],[0, "in"], [1, "out"]],
-                    True, [[0, "wgt"], [1, "wgt"]])
+   # tc.symmetry_test()
+    #tc.symmetry_test(0,[[0, "out"],[0, "in"], [1, "out"]],True, [[0, "wgt"], [1, "wgt"]])
     #tc.autoencoder_test()
     #tc.segment_counter_test()
     #tc.wine_quality_test()
