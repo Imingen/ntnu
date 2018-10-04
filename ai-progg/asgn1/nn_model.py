@@ -111,7 +111,7 @@ class NeuralNetModel():
         if bestk is not None and not aa:
             self.test_func = self.gen_match_counter(self.predictor, [tft.one_hot_to_int(list(v)) for v in targets], k = bestk)
         testres = sess.run([self.test_func], feed_dict=feeder)
-        #self.run_one_step(self.test_func, self.grabvars, session=sess,
+        #testres = self.run_one_step(self.test_func, self.grabvars, session=sess,
         #                            feed_dict=feeder)
         if bestk is None:
             h = 1
@@ -202,34 +202,6 @@ class NeuralNetModel():
         tft.close_session(self.current_session, False)
 
 
-
-#region Sentdex style
-        # Filtrerer ut de forskjellige layerene: input, hidden og output
-        #input_nodes = self.nodes[1]
-        #output_nodes = self.nodes[-1]
-        #hidden_nodes = self.nodes[1:-1]
-
-        # Først lagrer vi random weights og biases for hvert layer
-        # Her spesifiserer vi også shape på hvert layer siden dette kan være forskjellig for hvert layer
-        #layer_setup = []
-        #for number in range(0, self.num_layers-1):
-            # Weights = Alle weights mellom hver node i layer n og alle noder i layer n+1
-            # Biases = 1-dimensjonal vektor
-        #    layer = {"weights": tf.Variable(tf.random_normal([self.nodes[number], self.nodes[number+1]])),
-        #            "biases": tf.Variable(tf.random_normal([self.nodes[number+1]]))}
-        #    layer_setup.append(layer)
-
-        # Outputlayer må appendes til slutt fordi: 
-        # Siste elementet kan ikke knytters sammeen med number+1 e.g indexoutofbounds
-        #out_put_layer = {"weights": tf.Variable(tf.random_normal([self.nodes[-2], self.nodes[-1]])),
-        #               "biases": tf.Variable(tf.random_normal([self.nodes[-1]]))}
-        #layer_setup.append(out_put_layer)
-
-        # Alle layers er satt opp
-        #
-        #layer1 = tf.add(tf.matmul(lay))
-#endregion 
-
 class Layer():
     '''
     One layer in the nerual net. 
@@ -249,9 +221,7 @@ class Layer():
         return {"in": self.input, "out": self.output, "wgt": self.weights, "bias": self.biases}[type]
 
     def build(self):
-        #self.weights = tf.Variable(tf.random_normal([self.insize, self.outsize],  seed=1), name="Weights")
         self.weights = tf.Variable(np.random.uniform(self.nn.weight_range[0], self.nn.weight_range[1], size=(self.insize,self.outsize)), name=self.name+"-weights")
-        #self.biases = tf.Variable(tf.random_normal([self.outsize], seed=1), name="Bias")
         self.biases = tf.Variable(np.random.uniform(-.1, .1, size=(self.outsize)), name=self.name+"-biases")
         c = tf.add(tf.matmul(self.input, self.weights), self.biases)
         if not self.out:

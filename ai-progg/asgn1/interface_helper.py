@@ -15,7 +15,7 @@ def gen_optimizer(optimizer_name, learning_rate):
         return tf.train.GradientDescentOptimizer(learning_rate, name="GDS")
     elif optimizer_name is "ADAM":
         print("Optimizer: {}".format(optimizer_name))
-        return tf.train.AdamOptimizer(learning_rate, name="ADAM")
+        return tf.train.AdamOptimizer(learning_rate,  name="ADAM")
     elif optimizer_name is "Adagrad":
         print("Optimizer: {}".format(optimizer_name))
         return tf.train.AdagradOptimizer(learning_rate, name="Adagrad")
@@ -97,19 +97,20 @@ def load_data(filename, one_hot_size, delim=';', offset=0, fscale=True):
     data = data_file.read().split('\n')
     lines = []
     labels = []
+   
     for l in data:
         single_line = l.split(delim)
         sl_float = [float(x) for x in single_line]
         lines.append(sl_float[:-1])
         labels.append(sl_float[-1])
-
     labels2 = [] 
     for label in labels:
         label = int(label)
         x = one_hot_encoder(label, one_hot_size, offset=offset)
         labels2.append(x)
     if fscale:
-        feature_scale_v2(lines)
+        lines = feature_scale_v2(lines, 1, 0)
+    
     return [[x, y] for x, y in zip(lines, labels2)]
 
 def load_glass(filename, fscale=True):
@@ -138,6 +139,33 @@ def load_glass(filename, fscale=True):
         feature_scale(lines)
     return [[x, y] for x, y in zip(lines, labels2)]
 
+def load_fertility(filename):
+    """
+    This loads hackers choice option
+    https://archive.ics.uci.edu/ml/machine-learning-databases/00244/fertility_Diagnosis.txt
+    """     
+    data_file = open(filename, 'r')
+    data = data_file.read().split('\n')
+    lines = []
+    labels = []
+    for i, l in enumerate(data):
+        single_line = l.split(',')
+        sl_float = [float(x) for x in single_line[:-1]]
+        sl = [x for x in single_line[-1]]
+        lines.append(sl_float)
+        labels.append(sl)
+    labels2 = [] 
+    for label in labels:
+        if label[0] is 'N':
+            n = [0,1]   
+            labels2.append(n)
+        if label[0] is "O":
+            n = [1,0]
+            labels2.append(n)
+    return [[x, y] for x, y in zip(lines, labels2)]
+  
+
+
 def feature_scale(d):
     """
     Feature scaling function as described in the assignment spec. 
@@ -145,32 +173,24 @@ def feature_scale(d):
     """
     mean = np.mean(d,1)
     var = np.std(d,1)
-    for i, elg in enumerate(d):
-        d[i] =  (d[i] - mean[i]) / var[i]
-        #for j, elem in enumerate(elg):
-        #    d[i][j] =  (d[i][j] - mean[j]) / var[j]
+    for i, elg in enumerate(d[:2]):
+        for j, elem in enumerate(elg):
+            d[i][j] =  (d[i][j] - mean[j]) / var[j]
 
-def feature_scale_v2(d):
+def feature_scale_v2(d, high, low):
     """
-    Another feature scale function as described in the assignment spec, 
-    this one scales the features between 0 and 1.
-    Input is the features to be scales i.e a matrix
+    Another type of feature scaling I wanted to 
+    try on some data sets
     """
-    max = np.max(d, axis=1)
-    min = np.amin(d, axis=1)
-    for i, elg in enumerate(d):
-        d[i] = (d[i] - min[i]) / (max[i] - min[i])
-        
-        #for j, elem in enumerate(elg):
-        #    d[i][j] = (d[i][j] - min[j]) / (max[j] - min[j])
+    min = np.min(d, axis=0)
+    max = np.max(d, axis=0)
+    return high - (((high - low) * (max - d)) / (max-min))
 
 def feature_scale_mnist(d):
     max = np.max(d, axis=1)
-    print(len(max))
     min = np.amin(d, axis=1)
     for i, elg in enumerate(d):
         d[i] = (d[i] - min[i]) / (max[i] - min[i])
-
 
 def one_hot_encoder(k, size, off_val=0.0, on_val=1.0, floats=False, offset=0):
     """
