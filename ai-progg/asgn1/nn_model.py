@@ -74,10 +74,7 @@ class NeuralNetModel():
         self.error_history = []
         sess.run(tf.global_variables_initializer())
         gvars = self.error
-        mbs = self.mini_batch_size; ncases = len(cases); nmb = math.ceil(hm_steps/mbs)
-
-
-
+        mbs = self.mini_batch_size; ncases = len(cases)
 
         # Would like to use epochs instead but assignment ask for steps
         # This runs a random minibatch of size N through the network 
@@ -127,7 +124,7 @@ class NeuralNetModel():
         c = c[:1]
         for i in range(len(layers)):
             self.add_grabvar(layers[i][0], layers[i][1])
-       
+
         inputs = [n[0] for n in c]
         targets = [n[1] for n in c]
         feeder = {self.input: inputs, self.target:targets}
