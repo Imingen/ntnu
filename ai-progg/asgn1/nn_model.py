@@ -143,7 +143,7 @@ class NeuralNetModel():
         targets = [n[1] for n in c]
         feeder = {self.input: inputs, self.target: targets}
         res, grabs,_ = self.run_one_step(self.predictor, self.grabvars, session=sess, feed_dict=feeder)
-        self.display_grabvars(grabs, self.grabvars,  step=self.global_training_step)
+        self.display_grabvars(grabs, self.grabvars, step=self.global_training_step)
 
     def display_grabvars(self, grabbed_vals, grabbed_vars, step=1):
         name = [x.name for x in grabbed_vars]
