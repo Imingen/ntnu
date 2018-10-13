@@ -1,0 +1,3 @@
+What: Implementation of a Monte Carlo Tree Search to solve a simple game
+Purpose: Gain a better understanding of reinforcment learning using MCTS
+
