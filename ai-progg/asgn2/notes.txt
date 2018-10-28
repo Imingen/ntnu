@@ -1,0 +1,13 @@
+For the gamestate:
+    need to init the state of the game
+    need all legal actions that we can take
+    need child nodes generated with each action from a node
+    need to determine win state
+
+For MCTS:
+    Run search to generate statistics?? No understand, elaborate 
+    According to the tutorial https://medium.com/@quasimik/monte-carlo-tree-search-applied-to-letterpress-34f41c86e238
+    he has this class to generate statistics and build the search tree with the information from the simulations. 
+
+Probably also need a node class for the search tree that has
+statistics for that node etc

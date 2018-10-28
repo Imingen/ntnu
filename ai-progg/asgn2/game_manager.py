@@ -11,20 +11,34 @@
 # Given N & K, the rules of the game are: Each player take turn removing 
 # pieces from the board and the last person to remove a piece is the winner. 
 
-class StateManager():
+
+class GameState():
+
+    WIN_STRING = "winner winner chicken dinner"    
+
+    def __init__(self, num_pieces, max_pieces):
+        self.num_pieces = num_pieces # Number of pieces on the board
+        self.max_pieces = max_pieces # Maximum pieces a person is allowed to take per turn 
 
 
-    def __init__(self, N, K):
-        self.num_pieces = N # Number of pieces on the board
-        self.max_piece = K # Maximum pieces a person is allowed to take per turn 
+    def gen_successor(self):
+        x = "TODO"
+        
 
 
-# Problem: How to represent game states as a tree
-# Implementation of a tree as a data structure???
+    def is_winner(self, move):
+        if (self.num_pieces - move) == 0:
+            return True
+
+
+# Hva trenger jeg:
+# Få vite hva slags state spillet er i 
+# Generere barn for hver state
+# Finne ut om man er i en leaf node/terminal node
 
 
 
-class 
+
     
 
 
