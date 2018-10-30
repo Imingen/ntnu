@@ -11,3 +11,15 @@ For MCTS:
 
 Probably also need a node class for the search tree that has
 statistics for that node etc
+
+What if I keep the tree just as a datastrucutre of nodes. Each node knows its parent and childs
+
+
+IMPORTANT TO REMEMBER:
+We initialize the search with root node and all its child nodes.
+Then we choose a random one
+Then we simulate a play and based on the outcome of that play we update the value of the leaf node from the previous step. 
+
+
+QUESTION:
+1. go to leaf node, then expand it and run simulations?? Or go to leaf node, run simulations???

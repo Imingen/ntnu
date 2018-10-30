@@ -19,35 +19,35 @@ class GameState():
     def __init__(self, num_pieces, max_pieces):
         self.num_pieces = num_pieces # Number of pieces on the board
         self.max_pieces = max_pieces # Maximum pieces a person is allowed to take per turn 
+        self.player_one = 0
+        self.player_two = 0
+        self.players_turn = None
 
 
-    def gen_successor(self):
-        x = "TODO"
+    def gen_successor(self, action):
+        '''
+        Generate a successor state from this state based on the action taken,
+        where an action is an integer representing the number of pieces taken from the board. 
+        '''
+        num_sticks = self.num_pieces - action # The number of sticks in the next state is the number of sticks in this state minus the action
+        new_state = GameState(self.max_pieces, num_sticks)
+        return new_state
+
+
+    def get_legal_actions(self):
+        '''
+        Get all the possible actions from this state
+        '''
+        actions = []
+        if self.num_pieces >= self.max_pieces:
+            for i in range(1, self.max_pieces+1):
+                actions.append(i)
+        else:
+            for i in range(1, self.num_pieces+1):
+                actions.append(i)
+        return actions
         
-
-
-    def is_winner(self, move):
-        if (self.num_pieces - move) == 0:
-            return True
-
-
-# Hva trenger jeg:
-# Få vite hva slags state spillet er i 
-# Generere barn for hver state
-# Finne ut om man er i en leaf node/terminal node
-
-
-
-
     
-
-
-
-
-
-
-
-
-
-
-
+    def is_winner(self):
+        if self.num_pieces == 0:
+            return True
