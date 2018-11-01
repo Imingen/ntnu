@@ -133,6 +133,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         def minimax(node, depth, isMaxPlayer, ghost_index=0):
           m_depth = depth
           num_ghosts = node.getNumAgents() - 1
+          # Will be used to check if there is more ghosts to do minimizing move on
           ghost_index = ghost_index
 
           # In order to stop the recursion
@@ -163,18 +164,23 @@ class MinimaxAgent(MultiAgentSearchAgent):
               for action in legalActions:
                 state = node.generateSuccessor(ghost_index, action)
                 val = minimax(state, m_depth - 1, True)
-                bestValue = min(val, bestValue)             
+                bestValue = min(val, bestValue)    
+            # Continue to minimize for each ghost         
             else:
               for action in legalActions:
                 state = node.generateSuccessor(ghost_index, action)
                 val = minimax(state, m_depth, False, ghost_index+1)
                 bestValue = min(val, bestValue)
             return bestValue
-
+        # Initial call when the game asks for an action 
         lac = gameState.getLegalActions()
         num_ghosts = gameState.getNumAgents() - 1
         score = -(float("inf"))
+        # Just a generic best action, temporary holder
         best_action = Directions.STOP
+        # Loop through all the actions for this state
+        # and compare the value they return.
+        # Choose the action that has the biggest value e.g the best value for pacman
         for action in lac:
           next_state = gameState.generateSuccessor(0, action)
           prevscore = score
@@ -213,8 +219,14 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             for action in legalActions:
               state = node.generateSuccessor(0, action)
               val = max(val, alphabeta(state, m_depth, alpha, beta, False, 1))
+              # the value is larger than beta and that means that 
+              # there is no need to check the other nodes, since the other values that 
+              # are good for the MAX player here will be the same or higher and therefore
+              # the MIN player has no way to get to a node that has a potential lower value here. E.G this value
+              # is good enough for the max player
               if val > beta:
                 return val
+              # update the alpha value 
               alpha = max(alpha, val)
             return val
       
@@ -229,10 +241,13 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
               for action in legalActions:
                 state = node.generateSuccessor(ghost_index, action)
                 val = min(val, alphabeta(state, m_depth - 1, alpha, beta, True))
+                # Same as for maximizing version over, but here this value is good enought for the MIN player.
                 if val < alpha:
                   return val
+                # update the beta value
                 beta = min(beta, val)
             else:
+              # continue minimizing for each ghost
               for action in legalActions:
                 state = node.generateSuccessor(ghost_index, action)
                 val = min(val, alphabeta(state, m_depth, alpha, beta, False, ghost_index+1))
@@ -244,17 +259,20 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         lac = gameState.getLegalActions()
         num_ghosts = gameState.getNumAgents() - 1
         score = -(float("inf"))
+        # init best action to something temporary
         best_action = Directions.STOP
+        # initiate the alpha beta values to their worst possible values
         alpha = -(float("inf"))
         beta = float("inf")
+        # Loop through all the actions for this state
+        # and compare the value they return.
+        # Choose the action that has the biggest value e.g the best value for pacman
         for action in lac:
           next_state = gameState.generateSuccessor(0, action)
           prevscore = score
           score = max(score, alphabeta(next_state, self.depth, alpha, beta, False, 1))
           if score > prevscore:
             best_action = action
-          if score >= beta:
-            return bestaction
           alpha = max(alpha, score)
         return best_action
 

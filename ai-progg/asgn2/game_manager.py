@@ -14,14 +14,13 @@
 
 class GameState():
 
-    WIN_STRING = "winner winner chicken dinner"    
 
     def __init__(self, num_pieces, max_pieces):
         self.num_pieces = num_pieces # Number of pieces on the board
         self.max_pieces = max_pieces # Maximum pieces a person is allowed to take per turn 
-        self.player_one = 0
-        self.player_two = 0
-        self.players_turn = None
+        #self.player_one = 0
+        #self.player_two = 0
+        #self.players_turn = None
 
 
     def gen_successor(self, action):
@@ -30,7 +29,7 @@ class GameState():
         where an action is an integer representing the number of pieces taken from the board. 
         '''
         num_sticks = self.num_pieces - action # The number of sticks in the next state is the number of sticks in this state minus the action
-        new_state = GameState(self.max_pieces, num_sticks)
+        new_state = GameState(num_sticks, self.max_pieces)
         return new_state
 
 
@@ -39,15 +38,22 @@ class GameState():
         Get all the possible actions from this state
         '''
         actions = []
-        if self.num_pieces >= self.max_pieces:
-            for i in range(1, self.max_pieces+1):
-                actions.append(i)
-        else:
-            for i in range(1, self.num_pieces+1):
-                actions.append(i)
-        return actions
+        if self.num_pieces != 0:
+            if self.num_pieces >= self.max_pieces:
+                for i in range(1, self.max_pieces+1):
+                    actions.append(i)
+            else:
+                for i in range(1, self.num_pieces+1):
+                    actions.append(i)
+            return actions
+
+
         
     
     def is_winner(self):
-        if self.num_pieces == 0:
-            return True
+        return True if self.num_pieces == 0 else False
+
+      #  if self.num_pieces == 0:
+     #       return True
+     #   else:
+      #      return False
