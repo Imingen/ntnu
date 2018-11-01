@@ -1,6 +1,7 @@
 import game_manager as gm
 import math
 import random
+import copy
 
 ##################################################################
 #   This file contains all logic needed for the mcts algorithm
@@ -36,25 +37,20 @@ class MCTS():
     This class contains all logic concerning the monte-carlo-tree-search algorithm
     '''
 
-
-    # Init root and state
-    initial_state = gm.GameState(10, 3)
-    root = Node(None, initial_state)
-    visited = [root]
-
-    current = root
-
-
     def traverse_tree(self, node):
         current = node
         # The current node is not a leaf node
         while current.has_children():
             # This means that the node has children and we should traverse
             # to the next child-node that maximizes the UCB1 value
-            winner = current.children[1]
+            winner = current.children[0]
             for child in current.children:
-                if self.tree_policy(child) > self.tree_policy(winner):
-                    winner = child
+                if node.player_num == 1:
+                    if self.tree_policy(child) > self.tree_policy(winner):
+                        winner = child
+                elif node.player_num == 2:
+                    if self.tree_policy(child) < self.tree_policy(winner):
+                        winner = child
             current = winner
             # Now we have found the child to go to next
             # Continue to find the best child-node to go to until we are at a leaf node
@@ -88,11 +84,11 @@ class MCTS():
         RETURNS: The score at the end of the game: -10 if player2 wins & +10 if player1 wins
         '''
 
-        n = node
+        n = copy.copy(node)
         while not n.state.is_winner():
             legal_actions = n.state.get_legal_actions()
            # print(legal_actions)
-            print("num pieces: " + str(n.state.num_pieces))
+           # print("num pieces: " + str(n.state.num_pieces))
             r = random.randint(0, len(legal_actions) - 1)
          #   print("R: " + str(r))
             new_state = n.state.gen_successor(legal_actions[r])
@@ -100,13 +96,13 @@ class MCTS():
             n = new_node
          #   print(n.state.is_winner())
             if n.state.is_winner():
-                print("WINNER: " + str(n.player_num))
+                #print("WINNER: " + str(n.player_num))
                 break
         
         # Check what player won in this node
         if n.player_num == 1:
             return 10
-        else:
+        else: 
             return -10
 
     
@@ -130,11 +126,9 @@ class MCTS():
         # Using the UCB1 (or UCT if you like) magic to figure out which node to expand
         C = 1
         if node.num_visits is not 0:
-            print("NOT ZERO")
             avrg = node.value / node.num_visits
             return avrg + (C*math.sqrt(math.log(node.parent.num_visits) / node.num_visits))
         else:
-           # print("ZERO")
             return 0
 
 

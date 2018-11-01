@@ -45,6 +45,8 @@ class GameState():
             else:
                 for i in range(1, self.num_pieces+1):
                     actions.append(i)
+            # for i in actions:
+            #     print(f"action: {i}")
             return actions
 
 
