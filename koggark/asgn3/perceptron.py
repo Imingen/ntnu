@@ -20,12 +20,13 @@ class perceptron():
 
     def __init__(self, lrate):
         self.learning_rate = lrate
-        self.treshold = random.uniform(-0.5, 0.5)
-        self.weights = np.random.uniform(low=(-0.5), high=0.5, size=(2))
+        self.treshold = 10 #random.uniform(-0.5, 0.5)
+        self.weights = [-0.4, 0.4] #np.random.uniform(low=(-0.5), high=0.5, size=(2))
 
     
     def activation(self, inputs):
         self.inputs = inputs
+        #print(self.inputs)
         weighted_sum = 0
         for i, w in enumerate(self.weights):
             zum = self.inputs[i] * self.weights[i] - self.treshold
@@ -51,18 +52,19 @@ and_labels = [0, 0, 0, 1]
 or_labels = [0, 1, 1, 1]
 epochs = 100
 
-perceptron = perceptron(1)
+perceptron = perceptron(0.1)
+print(f"Initial weights: {perceptron.weights}")
 
 for epoch in range(epochs):
     print(f"Epcoh #{epoch+1}")
     print("######################################################")
-    for i, inp in enumerate(inputs):
+    for i in range(len(inputs)):
         prediction = perceptron.activation(inputs[i])
-        print(f"Input: {inputs[i]}. Desired output: {and_labels[i]}. Prediction: {prediction}. \nInitial weights: {perceptron.weights}.")
-        #print(f"Weights @ epoch #{epoch+1} & iteration #{i+1}: {perceptron.weights}")
-        perceptron.update_weights(prediction, and_labels[i])
+        #print(f"Input: {inputs[i]}. Desired output: {and_labels[i]}. Prediction: {prediction}. \nInitial weights: {perceptron.weights}.")
+        perceptron.update_weights(prediction, or_labels[i])
+        print(f"Weights @ epoch #{epoch+1} & iteration #{i+1}: {perceptron.weights}")
         
-        print(f"Error: {perceptron.error}.\nUpdated weights: {perceptron.weights} \n")
+       # print(f"Error: {perceptron.error}.\nUpdated weights: {perceptron.weights} \n")
     print("######################################################")
     
     
