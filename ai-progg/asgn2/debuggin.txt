@@ -1,0 +1,10 @@
+
+Traversing/selecting nodes
+   Check UCB1 selection
+   Se om begge spillere velger riktig
+
+Simulation
+   Sjekk om neste spiller blir vinner selvom forrige spiller tok de siste brikkene
+
+Backprop
+   Se om backprop blir riktig valgt

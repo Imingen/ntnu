@@ -1,0 +1,45 @@
+For the gamestate:
+    need to init the state of the game
+    need all legal actions that we can take
+    need child nodes generated with each action from a node
+    need to determine win state
+
+For MCTS:
+    Run search to generate statistics?? No understand, elaborate 
+    According to the tutorial https://medium.com/@quasimik/monte-carlo-tree-search-applied-to-letterpress-34f41c86e238
+    he has this class to generate statistics and build the search tree with the information from the simulations. 
+
+Probably also need a node class for the search tree that has
+statistics for that node etc
+
+What if I keep the tree just as a datastrucutre of nodes. Each node knows its parent and childs
+
+
+IMPORTANT TO REMEMBER:
+We initialize the search with root node and all its child nodes.
+Then we choose a random one
+Then we simulate a play and based on the outcome of that play we update the value of the leaf node from the previous step. 
+
+
+QUESTION:
+1. go to leaf node, then expand it and run simulations?? Or go to leaf node, run simulations???
+
+
+
+        current = node
+        # The current node is not a leaf node
+        while current.has_children():
+            # This means that the node has children and we should traverse
+            # to the next child-node that maximizes the UCB1 value
+            winner = node.children[1]
+            for child in node.children:
+                if self.tree_policy(child) > self.tree_policy(winner):
+                    winner = child
+            current = winner
+            # Now we have found the child to go to next
+            # Continue to find the best child-node to go to until we are at a leaf node
+            if current.has_children == False:
+                break
+        # Current node is a leaf node
+        # We have traversed the whole tree up until a node that has no more children 
+        return current

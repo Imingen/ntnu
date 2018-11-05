@@ -1,0 +1,12 @@
+What: Implementation of a Monte Carlo Tree Search to solve a simple game
+Purpose: Gain a better understanding of reinforcment learning using MCTS
+
+1. Make a functioning game / state manager
+Why make this first? Easier to make the search algorithm when I have 
+something to work with. 
+
+
+
+
+
+
