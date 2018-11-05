@@ -21,7 +21,6 @@ class Node():
         self.num_visits = 0
         self.player_num = player_num
 
-
     def has_children(self):
         if len(self.children) != 0:
             return True
@@ -45,10 +44,13 @@ class MCTS():
             # to the next child-node that maximizes the UCB1 value
             winner = current.children[0]
             for child in current.children:
-                if node.player_num == 1:
+                if child.num_visits == 0:
+                    winner = child
+                    break
+                if current.player_num == 1:
                     if self.tree_policy(child) > self.tree_policy(winner):
                         winner = child
-                elif node.player_num == 2:
+                elif current.player_num == 2:
                     if self.tree_policy(child) < self.tree_policy(winner):
                         winner = child
             current = winner
@@ -68,12 +70,13 @@ class MCTS():
         # Get all possible actions from this node
         legal_actions = node.state.get_legal_actions()
         # Generate all the new states from these legal actions
-        for action in legal_actions:
-            new_state = node.state.gen_successor(action)
-            # Create a new node with this new state and add this as a child to the input node
-            new_node = Node(node, new_state, player_num=3-node.player_num)
-            # Add this new node as child for this node
-            node.children.append(new_node)
+        if legal_actions is not None:
+            for action in legal_actions:
+                new_state = node.state.gen_successor(action)
+                # Create a new node with this new state and add this as a child to the input node
+                new_node = Node(node, new_state, player_num=3-node.player_num)
+                # Add this new node as child for this node
+                node.children.append(new_node)
 
 
     def simulation(self, node):
@@ -86,24 +89,24 @@ class MCTS():
 
         n = copy.copy(node)
         while not n.state.is_winner():
+           # print(f"In simulation: It is player{n.player_num}'s turn and there is {n.state.num_pieces} sticks left on the table")
             legal_actions = n.state.get_legal_actions()
            # print(legal_actions)
            # print("num pieces: " + str(n.state.num_pieces))
             r = random.randint(0, len(legal_actions) - 1)
          #   print("R: " + str(r))
             new_state = n.state.gen_successor(legal_actions[r])
+            if new_state.is_winner():
+                break
             new_node = Node(n, new_state, player_num=3-n.player_num)
             n = new_node
-         #   print(n.state.is_winner())
-            if n.state.is_winner():
-                #print("WINNER: " + str(n.player_num))
-                break
-        
+
+       # print(f"In simulation: Player{n.player_num} & {n.state.num_pieces}")            
         # Check what player won in this node
         if n.player_num == 1:
-            return 10
+            return 1
         else: 
-            return -10
+            return -1
 
     
     def backprop(self, terminal_value, node):
@@ -127,31 +130,12 @@ class MCTS():
         C = 1
         if node.num_visits is not 0:
             avrg = node.value / node.num_visits
-            return avrg + (C*math.sqrt(math.log(node.parent.num_visits) / node.num_visits))
+            if node.parent.player_num == 1:
+                return avrg + (C*math.sqrt(math.log(node.parent.num_visits) / node.num_visits))
+            elif node.parent.player_num == 2:
+                return avrg - (C*math.sqrt(math.log(node.parent.num_visits) / node.num_visits))
         else:
             return 0
-
-
-
-    def get_action(self, node):
-        '''
-        Get an action running MCTS from a node. The node as input will be the
-        root node of that search. 
-        '''
-
-        # Currently hardcoded amount of rollouts/simulations during development
-        # Also called the M value in the assignment specification
-        NUM_ROLLOUTS = 10
-        root = node
-        
-        # run the game loop forever until a win/loss state is achieved
-        # this should be expanded in future to have a timer so that it doesn't go on forever
-      #  while True:
-            # TODO: Save the search tree from MCTS rollouts, so that we dont have to compute the tree anew for every new root node
-
-
-
-
 
 
 

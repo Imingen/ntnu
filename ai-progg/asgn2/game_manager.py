@@ -50,7 +50,9 @@ class GameState():
             return actions
 
 
-        
+    def do_move(self, move):
+        if move > 0 and move <= self.max_pieces:
+            self.num_pieces -= move
     
     def is_winner(self):
         return True if self.num_pieces == 0 else False
