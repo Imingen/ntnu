@@ -13,7 +13,9 @@
 
 4. Tournament of progressive policies (TOPP)
 
-
+TODO:
+Check state is win/loss
+Implement MCTS basic 
 
 
 

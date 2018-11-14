@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mplp  
+import copy
 
 
 class StateManager():
@@ -23,30 +24,63 @@ class StateManager():
                 c.append(self.board[i][j].color)
             print(c)
     
+    def get_legal_actions(self):
+        legal_actions = []
+        for i, row in enumerate(self.board):
+            for j, col in enumerate(row):
+                if self.board[i][j].color is 'White':
+                    legal_actions.append([i, j])
+        return legal_actions
 
+    def do_move(self, piece):
+        i = piece.row
+        j = piece.col
+        self.board[i][j] = piece
+
+    def check_piece(self, piece, board, player):
+        if player == 1 and piece.row == self.size-1:
+            return True
+        if player == 2 and piece.col == self.size-1:
+            return True
+        c = [x for x in piece.neighbors]
+        for neighbor in c:
+            if board[neighbor[0]][neighbor[1]].color == "R":
+                board[piece.row][piece.col].color = "CHECKED"
+                return self.check_piece(board[neighbor[0]][neighbor[1]], board, player)
+            else:
+                continue
 
     def check_state(self, player=1):
+        """This code is garbage
+        TODO: Refractor lil bitch
+        """
+        cp = copy.deepcopy(self.board)
         if player == 1:
-            current = None
             for piece in self.board[0]:
-                if piece == 1:
-                    current = piece
+                if piece.color == "R":
+                    res = self.check_piece(piece, cp, player)
+                    if res == True:
+                        return res
+                    else:
+                        continue
+            return False
+        elif player == 2:
+            for piece in self.board:
+                if piece[0].color == "R":
+                    res = self.check_piece(piece[0], cp, player)
+                    if res == True:
+                        return res
+                    else:
+                        continue
+            return False
+
+
             
-
-
-
-
-
-
-
-
-########################################################
-#   FAGEDDABOUTID
-########################################################
-
 class Piece():
+    """Represents ONE piece on the HEX board.
+    """
 
-    def __init__(self, row, col, size, color='White'):
+    def __init__(self, row, col, size, color='W'):
         self.row = row
         self.col = col
         self.color = color
@@ -78,6 +112,25 @@ class Piece():
         return self.color
 
 
+
+
+
+
+
+
+#######################################################
+#   Code Graveyard
+#######################################################
+
+# def check_state(self, piece):
+#     for piece in self.board[0]:
+#         board_copy = copy.deepcopy(self.board)
+#         if piece.color == "Red":
+#             current = piece
+#             c = [x for x in piece.neighbors]
+#             if any([x for x in c if self.board[x[0]][x[1]].color == 'Red']):
+#                 print(c)
+#                 print("HEKK")
 
 
 
