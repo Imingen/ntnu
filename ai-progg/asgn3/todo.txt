@@ -1,0 +1,19 @@
+
+
+1. Representing the game state
+    a) Simple code for representing the state
+        Need to be able to change size of board
+    b) How to vizualise it
+    c) How to represent it for neural net shit
+
+2. Do the MCTS algorithm 
+    a) Same parameters as last project needs to be modifiable
+
+3. Do the neural net shit, probably part of the MCTS algorithm
+
+4. Tournament of progressive policies (TOPP)
+
+
+
+
+
