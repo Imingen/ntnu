@@ -57,7 +57,3 @@ class GameState():
     def is_winner(self):
         return True if self.num_pieces == 0 else False
 
-      #  if self.num_pieces == 0:
-     #       return True
-     #   else:
-      #      return False

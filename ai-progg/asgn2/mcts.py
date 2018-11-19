@@ -127,7 +127,7 @@ class MCTS():
 
     def tree_policy(self, node):
         # Using the UCB1 (or UCT if you like) magic to figure out which node to expand
-        C = 1
+        C = 2
         if node.num_visits is not 0:
             avrg = node.value / node.num_visits
             if node.parent.player_num == 1:
@@ -135,6 +135,7 @@ class MCTS():
             elif node.parent.player_num == 2:
                 return avrg - (C*math.sqrt(math.log(node.parent.num_visits) / node.num_visits))
         else:
+            # Not needed anymore but too scared to delete
             return 0
 
 

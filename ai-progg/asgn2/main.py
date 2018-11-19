@@ -72,7 +72,7 @@ def nim_sim(N, K, M, G, player=1, verbose=False):
             if verbose:
                 print(f"Player{root.player_num}'s turn. There is {root.state.num_pieces} sticks on the table")
                 print(f"Available actions {[i for i in root.state.get_legal_actions()]}")
-            a, new_root = get_action(root, 60)
+            a, new_root = get_action(root, NUM_SIMULATIONS)
             state.do_move(a)
             if verbose:
                 print(f"Player {root.player_num} took {a} number of stones")
@@ -93,7 +93,7 @@ def nim_sim(N, K, M, G, player=1, verbose=False):
 
 if __name__ == "__main__":
 
-    nim_sim(N=7, K=2, M=1000, G=50, player=1, verbose=True)
+    nim_sim(N=99, K=6, M=500, G=3, player=1, verbose=False)
 
 
 
