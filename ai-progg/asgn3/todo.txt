@@ -19,3 +19,12 @@ Implement MCTS basic
 
 
 
+state check pseudocode:
+
+# Find first node for a player e.g along the starting axix for certain player
+
+for piece along y axis i.e for player two
+
+
+
+

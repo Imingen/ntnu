@@ -6,8 +6,12 @@ import copy
 
 class StateManager():
 
+
     def __init__(self, size):
         self.size = size
+        self.color_dict = {1:"R", 2:"B", 3:"W"}
+        self.winner = None
+        self.checked_nodes = []
     
     def init_board(self):
         self.board = []
@@ -26,54 +30,71 @@ class StateManager():
     
     def get_legal_actions(self):
         legal_actions = []
-        for i, row in enumerate(self.board):
-            for j, col in enumerate(row):
-                if self.board[i][j].color is 'White':
+        for i in range(0, self.size):
+            for j in range(0, self.size):
+                if self.board[i][j].color is "W":
                     legal_actions.append([i, j])
         return legal_actions
 
-    def do_move(self, piece):
-        i = piece.row
-        j = piece.col
-        self.board[i][j] = piece
+    def gen_successor(self, action, player):
+        new_state = StateManager(self.size)
+        new_state.board = copy.deepcopy(self.board)
+        new_state.do_move(action, player)
+        return new_state
+
+    def do_move(self, square, player):
+        i = square[0]
+        j = square[1]
+        if self.board[i][j].color == self.color_dict[3]:
+            self.board[i][j] = Piece(i, j, self.size, self.color_dict[player])
+
 
     def check_piece(self, piece, board, player):
+        """Recursion is yolo m8
+        """
+        result = False
         if player == 1 and piece.row == self.size-1:
             return True
         if player == 2 and piece.col == self.size-1:
             return True
-        c = [x for x in piece.neighbors]
-        for neighbor in c:
-            if board[neighbor[0]][neighbor[1]].color == "R":
-                board[piece.row][piece.col].color = "CHECKED"
-                return self.check_piece(board[neighbor[0]][neighbor[1]], board, player)
-            else:
-                continue
 
-    def check_state(self, player=1):
-        """This code is garbage
-        TODO: Refractor lil bitch
-        """
-        cp = copy.deepcopy(self.board)
-        if player == 1:
-            for piece in self.board[0]:
-                if piece.color == "R":
-                    res = self.check_piece(piece, cp, player)
-                    if res == True:
-                        return res
-                    else:
-                        continue
-            return False
-        elif player == 2:
-            for piece in self.board:
-                if piece[0].color == "R":
-                    res = self.check_piece(piece[0], cp, player)
-                    if res == True:
-                        return res
-                    else:
-                        continue
-            return False
+        self.checked_nodes.append(piece)
 
+        for node in self.checked_nodes:
+            c = [x for x in piece.neighbors]
+            for neighbor in c:
+                current = board[neighbor[0]][neighbor[1]]
+                if current in self.checked_nodes:
+                    continue
+                elif board[neighbor[0]][neighbor[1]].color == self.color_dict[player]:
+                    result = self.check_piece(current, board, player)
+                    if result == True:
+                        return result
+        return result
+
+    def check_player1_win(self):
+        result = False
+        for piece in self.board[0]:
+            if piece.color == self.color_dict[1]:
+                self.checked_nodes = []
+                result = self.check_piece(piece, self.board, player = 1)
+                if result is True:
+                    break
+                else:
+                    continue
+        return result
+
+    def check_player2_win(self):
+        result = False
+        for piece in self.board:
+            if piece[0].color == self.color_dict[2]:
+                self.checked_nodes = []
+                result = self.check_piece(piece[0], self.board, player = 2)
+                if result is True:
+                    break
+                else:
+                    continue
+        return result
 
             
 class Piece():
@@ -132,5 +153,18 @@ class Piece():
 #                 print(c)
 #                 print("HEKK")
 
-
+# def check_piece_v2(self, piece, board, player):
+#     if player == 1 and piece.row == self.size-1:
+#         self.winner = 'one'
+#         return True
+#     if player == 2 and piece.col == self.size-1:
+#         self.winner = 'two'
+#         return True
+#     c = [x for x in piece.neighbors]
+#     for neighbor in c:
+#         if board[neighbor[0]][neighbor[1]].color == self.color_dict[player]:
+#             board[piece.row][piece.col].color = "CHECKED"
+#             return self.check_piece(board[neighbor[0]][neighbor[1]], board, player)
+#         else:
+#             continue
 
