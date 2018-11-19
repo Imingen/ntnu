@@ -1,0 +1,15 @@
+
+
+1. Representing the game state
+    b) How to vizualise it
+    c) How to represent it for neural net shit
+
+3. Do the neural net shit, probably part of the MCTS algorithm
+
+4. Tournament of progressive policies (TOPP)
+
+HUSK HUSK HUSK:
+- Trenger ikke inite brettet med hvite brikker, 
+kan kun være ett tomt brett. Dette kan også gjøre det enklere 
+å sjekke status for ruter på brettet. 
+
