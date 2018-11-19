@@ -1,30 +1,15 @@
 
 
 1. Representing the game state
-    a) Simple code for representing the state
-        Need to be able to change size of board
     b) How to vizualise it
     c) How to represent it for neural net shit
-
-2. Do the MCTS algorithm 
-    a) Same parameters as last project needs to be modifiable
 
 3. Do the neural net shit, probably part of the MCTS algorithm
 
 4. Tournament of progressive policies (TOPP)
 
-TODO:
-Check state is win/loss
-Implement MCTS basic 
-
-
-
-state check pseudocode:
-
-# Find first node for a player e.g along the starting axix for certain player
-
-for piece along y axis i.e for player two
-
-
-
+HUSK HUSK HUSK:
+- Trenger ikke inite brettet med hvite brikker, 
+kan kun være ett tomt brett. Dette kan også gjøre det enklere 
+å sjekke status for ruter på brettet. 
 

@@ -6,7 +6,6 @@ import copy
 
 class StateManager():
 
-
     def __init__(self, size):
         self.size = size
         self.color_dict = {1:"R", 2:"B", 3:"W"}
@@ -27,12 +26,13 @@ class StateManager():
             for j, col in enumerate(row):
                 c.append(self.board[i][j].color)
             print(c)
+        print("_____________________")
     
     def get_legal_actions(self):
         legal_actions = []
         for i in range(0, self.size):
             for j in range(0, self.size):
-                if self.board[i][j].color is "W":
+                if self.board[i][j].color == "W":
                     legal_actions.append([i, j])
         return legal_actions
 
@@ -45,7 +45,7 @@ class StateManager():
     def do_move(self, square, player):
         i = square[0]
         j = square[1]
-        if self.board[i][j].color == self.color_dict[3]:
+        if self.board[i][j].color == self.color_dict[3] and self.board[i][j].color != self.color_dict[3-player]:
             self.board[i][j] = Piece(i, j, self.size, self.color_dict[player])
 
 
@@ -78,8 +78,8 @@ class StateManager():
             if piece.color == self.color_dict[1]:
                 self.checked_nodes = []
                 result = self.check_piece(piece, self.board, player = 1)
-                if result is True:
-                    break
+                if result == True:
+                    return result
                 else:
                     continue
         return result
@@ -90,12 +90,14 @@ class StateManager():
             if piece[0].color == self.color_dict[2]:
                 self.checked_nodes = []
                 result = self.check_piece(piece[0], self.board, player = 2)
-                if result is True:
-                    break
+                if result == True:
+                    return result
                 else:
                     continue
         return result
 
+    def is_winner(self):
+        return self.check_player1_win() or self.check_player2_win()
             
 class Piece():
     """Represents ONE piece on the HEX board.

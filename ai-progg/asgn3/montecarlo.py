@@ -1,5 +1,6 @@
 import copy
 import random
+import math 
 ############################################
 #   This file contains the logic for 
 #   the monte-carlo-tree-search algorithm 
@@ -91,6 +92,11 @@ class MCTS():
            # print("num pieces: " + str(n.state.num_pieces))
             r = random.randint(0, len(legal_actions) - 1) if len(legal_actions) >= 1 else 0
             if r == 0 and not legal_actions:
+                break
+                '''
+                This is hacks 
+                TODO: FIX 
+                '''
                 print(f"legal actions: {legal_actions}")
                 print(f"r: {r}")
                 print("0000000000000000")
@@ -105,12 +111,16 @@ class MCTS():
             if n.player_num == 1:
                 result = new_state.check_player1_win()
                 if result is True:
+                   # print('Player ONE')
+                   # n.state.print_board()
                     n.state = new_state
                     n.state.winner = "Player ONE"
                     break
             if n.player_num == 2:
                 result = new_state.check_player2_win()
                 if result is True:
+                   # print('Player TWO')
+                  # n.state.print_board()
                     n.state = new_state
                     n.state.winner = "Player TWO"
                     break
