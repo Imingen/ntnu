@@ -33,40 +33,71 @@ class StateManager():
         """Prints the board in the format the HEX game
         is represented as to the players: A diamond shape.
         """
-        n = 0
-        m = 0
 
-        for i in range(0, n+1):
-            for j in range(0, n+1, ):
-                print(i, j)
-                n = n + 1
-                m = m + 1
-        x = ["0", " ", "0", "0", " "]
-        y = ''.join(x)
-        print(y)
+        new_size = (2 * self.size)-1
+        diamond_grid = []
+        mod_col = self.size-1
 
-        # ok = self.get_flat_board()
-        # index = 0
-        # m = self.size
-        # n = 1
-        # for i in range(1, m+1):
-        #     for j in range(1, (m-i)+1):
-        #         print(end=" ")
-        #     for i in range(0, n):
-        #         print("*", end = " ")
-        #     n = n + 1
-        #     print()
-            
+        for i in range(0,new_size):
+            tmp = []
+            for j in range(0, new_size):
+                tmp.append(" ")
+            diamond_grid.append(tmp)
+        for i, p in enumerate(self.board):
+            for j, piece in enumerate(self.board):
+                #print(self.board[i][j].row, self.board[i][j].col)
+                new_row = self.board[i][j].row + self.board[i][j].col
+                new_col = mod_col + self.board[i][j].col - self.board[i][j].row
+                diamond_grid[new_row][new_col] = self.board[i][j].color
+
+        diamond_grid = np.array(diamond_grid)
+        print(diamond_grid)
+        print("__________________________")
+        for item in diamond_grid:
+            str1 = ''.join(item)
+            print(str1)
         
-        # for i in range(m-1, 0, -1):
-        #     for j in range((m-i)+1, 1, -1):
-        #         print(end=" ")
 
-        #     for i in range(1, n-1):
-        #         print("*", end = " ")
-        #     n = n - 1
-        #     print()
-                
+    def get_list_from_spaghett(self):
+        """Need this little fuckboi because.....reasons
+        """
+        n = 1
+        m = self.size
+        rows = []
+        cols = []
+
+        while True:
+            for i in range(n, 0, -1):
+                rows.append(i-1)
+            for j in range(0, n):
+                cols.append(j)
+            n = n + 1
+            if n > self.size:
+                break
+        y = 1
+        lit = []
+        lit2 = []
+        while y != self.size:
+            x = []
+            z = []
+            for i in range(y,self.size):
+                x.append(i)
+                z.append(i)
+            x.reverse()
+            lit.append(x)
+            lit2.append(z)
+
+            y = y+1
+
+        rc_top = list(zip(rows,cols))
+        tmp = list()
+        for i in range(len(lit)):
+            tmp.append(list(zip(lit[i], lit2[i])))
+        tmp = [item for x in tmp for item in x]
+        for item in tmp:
+            rc_top.append(item)        
+        return rc_top
+
 
     def get_flat_board(self):
         """Returns a flat representions of the board. 
