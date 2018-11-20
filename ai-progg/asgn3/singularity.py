@@ -5,51 +5,50 @@ from keras.layers import Dense, Dropout
 from keras.optimizers import RMSprop
 import numpy as np
 import state_manager as sm
-from montecarlo import Node
 
 
 
+# region 
+# def simulation(node, model):
 
-def simulation(node, model):
-
-    n = node
-    while True:
+#     n = node
+#     while True:
         
-        flat_state = n.state.get_flat_board()
-        index = neural_magic(model, flat_state)
-        action = n.state.int_to_index(index)
-        print(index)
-        print(action)
-        new_state = n.state.gen_successor(action, n.player_num)
-        new_state.print_board()
+#         flat_state = n.state.get_flat_board()
+#         index = neural_magic(model, flat_state)
+#         action = n.state.int_to_index(index)
+#         print(index)
+#         print(action)
+#         new_state = n.state.gen_successor(action, n.player_num)
+#         new_state.print_board()
 
-        if n.player_num == 1:
-            result = new_state.check_player1_win()
-            if result is True:
-                # print('Player ONE')
-                # n.state.print_board()
-                n.state = new_state
-                n.state.winner = "Player ONE"
-                break
-        if n.player_num == 2:
-            result = new_state.check_player2_win()
-            if result is True:
-                # print('Player TWO')
-                # n.state.print_board()
-                n.state = new_state
-                n.state.winner = "Player TWO"
-                break
-        new_node = Node(n, new_state, player_num=3-n.player_num)
-        n = new_node
-    n.state.print_board()
-    print(f"Winner: {n.state.winner}")
+#         if n.player_num == 1:
+#             result = new_state.check_player1_win()
+#             if result is True:
+#                 # print('Player ONE')
+#                 # n.state.print_board()
+#                 n.state = new_state
+#                 n.state.winner = "Player ONE"
+#                 break
+#         if n.player_num == 2:
+#             result = new_state.check_player2_win()
+#             if result is True:
+#                 # print('Player TWO')
+#                 # n.state.print_board()
+#                 n.state = new_state
+#                 n.state.winner = "Player TWO"
+#                 break
+#         new_node = Node(n, new_state, player_num=3-n.player_num)
+#         n = new_node
+#     n.state.print_board()
+#     print(f"Winner: {n.state.winner}")
 
-    if n.player_num == 1:
-        return 1
-    else: 
-        return -1
+#     if n.player_num == 1:
+#         return 1
+#     else: 
+#         return -1
 
-
+# endregion
 
 def get_anet(num_input, num_output):
 
@@ -93,17 +92,17 @@ def neural_magic(model, state):
 # score = model.evaluate(x=train, y=labels)
 
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
     
-    state = sm.StateManager(4)
-    state.init_board()
-    root = Node(None, state)
+    # state = sm.StateManager(4)
+    # state.init_board()
+    # root = Node(None, state)
 
-    flat_state = state.get_flat_board()
-    #print(flat_state)
-    anet = get_anet(state.size**2, state.size**2)
-    #neural_magic(anet, flat_state)
-    simulation(root, anet)
+    # flat_state = state.get_flat_board()
+    # #print(flat_state)
+    # anet = get_anet(state.size**2, state.size**2)
+    # #neural_magic(anet, flat_state)
+    # simulation(root, anet)
 
 
 #print("_------------------_")

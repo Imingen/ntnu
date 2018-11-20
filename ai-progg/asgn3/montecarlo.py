@@ -1,6 +1,7 @@
 import copy
 import random
 import math 
+from singularity import neural_magic
 ############################################
 #   This file contains the logic for 
 #   the monte-carlo-tree-search algorithm 
@@ -76,62 +77,40 @@ class MCTS():
                 node.children.append(new_node)
 
 
-    def simulation(self, node, verbose=False):
-        '''
-        Determine the value of leaf node by running a simulation of the game
-        As long as there is no winner, take a random action until a terminal node is reach e.g
-        the end of the game is reached
-        RETURNS: The score at the end of the game: -10 if player2 wins & +10 if player1 wins
-        '''
+    def simulation(self, node, model):
 
-        n = node
+        n = copy.copy(node)
         while True:
-           # print(f"In simulation: It is player{n.player_num}'s turn and there is {n.state.num_pieces} sticks left on the table")
-            legal_actions = n.state.get_legal_actions()
-           # print(legal_actions)
-           # print("num pieces: " + str(n.state.num_pieces))
-            r = random.randint(0, len(legal_actions) - 1) if len(legal_actions) >= 1 else 0
-            if r == 0 and not legal_actions:
-                break
-                '''
-                This is hacks 
-                TODO: FIX 
-                '''
-                print(f"legal actions: {legal_actions}")
-                print(f"r: {r}")
-                print("0000000000000000")
-                n.state.print_board()
-                print("0000000000000000")
+            
+            flat_state = n.state.get_flat_board()
+            index = neural_magic(model, flat_state)
+            action = n.state.int_to_index(index)
+           # print(index)
+           # print(action)
+            new_state = n.state.gen_successor(action, n.player_num)
+            #new_state.print_board()
 
-         #   print("R: " + str(r))
-            new_state = n.state.gen_successor(legal_actions[r], n.player_num )
-            if verbose:
-                new_state.print_board()
-                print("-------------------")
             if n.player_num == 1:
                 result = new_state.check_player1_win()
                 if result is True:
-                   # print('Player ONE')
-                   # n.state.print_board()
+                    # print('Player ONE')
+                    # n.state.print_board()
                     n.state = new_state
                     n.state.winner = "Player ONE"
                     break
             if n.player_num == 2:
                 result = new_state.check_player2_win()
                 if result is True:
-                   # print('Player TWO')
-                  # n.state.print_board()
+                    # print('Player TWO')
+                    # n.state.print_board()
                     n.state = new_state
                     n.state.winner = "Player TWO"
                     break
             new_node = Node(n, new_state, player_num=3-n.player_num)
             n = new_node
-        if verbose:
-            n.state.print_board()
-            print(n.state.winner)
-            print('dasda', n.player_num)
-       # print(f"In simulation: Player{n.player_num} & {n.state.num_pieces}")            
-        # Check what player won in this node
+        #n.state.print_board()
+        #print(f"Winner: {n.state.winner}")
+
         if n.player_num == 1:
             return 1
         else: 

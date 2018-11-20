@@ -19,12 +19,54 @@ class StateManager():
             self.board.append(tmp)
 
     def print_board(self):
+        """Prints the game board as it is represented
+        internally in the system: As a n x n matrix
+        """
         for i, row in enumerate(self.board):
             c = []
-            for j, col in enumerate(row):
+            for j, col in enumerate(self.board):
                 c.append(self.board[i][j].color)
             print(c)
         print("____________________")
+
+    def print_board_pretty(self):
+        """Prints the board in the format the HEX game
+        is represented as to the players: A diamond shape.
+        """
+        n = 0
+        m = 0
+
+        for i in range(0, n+1):
+            for j in range(0, n+1, ):
+                print(i, j)
+                n = n + 1
+                m = m + 1
+        x = ["0", " ", "0", "0", " "]
+        y = ''.join(x)
+        print(y)
+
+        # ok = self.get_flat_board()
+        # index = 0
+        # m = self.size
+        # n = 1
+        # for i in range(1, m+1):
+        #     for j in range(1, (m-i)+1):
+        #         print(end=" ")
+        #     for i in range(0, n):
+        #         print("*", end = " ")
+        #     n = n + 1
+        #     print()
+            
+        
+        # for i in range(m-1, 0, -1):
+        #     for j in range((m-i)+1, 1, -1):
+        #         print(end=" ")
+
+        #     for i in range(1, n-1):
+        #         print("*", end = " ")
+        #     n = n - 1
+        #     print()
+                
 
     def get_flat_board(self):
         """Returns a flat representions of the board. 
@@ -43,6 +85,7 @@ class StateManager():
                     flat_list.append(0)
         return np.array([flat_list])
 
+
     def int_to_index(self, x):
         """Turns a simple int which is an index in a 1D array
         into an index for a matrix
@@ -55,12 +98,11 @@ class StateManager():
         j = x % self.size
         return [i,j]
 
-    
     def get_legal_actions(self):
         legal_actions = []
         for i in range(0, self.size):
             for j in range(0, self.size):
-                if self.board[i][j].color == "W":
+                if self.board[i][j].color == 'W':
                     legal_actions.append([i, j])
         return legal_actions
 
@@ -73,9 +115,8 @@ class StateManager():
     def do_move(self, square, player):
         i = square[0]
         j = square[1]
-        if self.board[i][j].color == self.color_dict[3] and self.board[i][j].color != self.color_dict[3-player]:
+        if self.board[i][j].color == self.color_dict[3]:
             self.board[i][j] = Piece(i, j, self.size, self.color_dict[player])
-
 
     def check_piece(self, piece, board, player):
         """Recursion is yolo m8
@@ -125,7 +166,12 @@ class StateManager():
         return result
 
     def is_winner(self):
-        return self.check_player1_win() or self.check_player2_win()
+        if self.check_player1_win() == True:
+            return True
+        if self.check_player2_win() == True:
+            return True
+        else:
+            return False
             
 class Piece():
     """Represents ONE piece on the HEX board.

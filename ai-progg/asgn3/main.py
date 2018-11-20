@@ -1,6 +1,7 @@
 import state_manager as sm
 from montecarlo import MCTS
 from montecarlo import Node
+import singularity as si
 import copy
 
 
@@ -13,20 +14,27 @@ def get_action(node, num_rollouts):
     rollouts = num_rollouts
     monte_carlo = MCTS()
     root = node
+    x = root.state.get_legal_actions()
+    if len(x) == 0:
+        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+        root.state.print_board()
+        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+
+    anet = si.get_anet(root.state.size**2, root.state.size**2)
     while rollouts > 0:
         rollouts -= 1
         if len(root.children) == 0:
             monte_carlo.expand_node(root)
         n = monte_carlo.traverse_tree(root)
         if n.num_visits == 0:
-            value = monte_carlo.simulation(n)
+            value = monte_carlo.simulation(n, anet)
             monte_carlo.backprop(value, n)
             continue
         if n.num_visits > 0:
             monte_carlo.expand_node(n)
             if len(n.children) > 0:
                 nn = n.children[0]
-                value = monte_carlo.simulation(nn)
+                value = monte_carlo.simulation(nn, anet)
                 monte_carlo.backprop(value, nn)
             else:
                 if n.player_num == 1:
@@ -72,15 +80,15 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False):
             print("#######################################")    
 
         while True:
-            if verbose:
-                print(f"Player{root.player_num}'s turn. There is {root.state.num_pieces} sticks on the table")
-                print(f"Available actions {[i for i in root.state.get_legal_actions()]}")
+            
             new_root, a = get_action(root, NUM_SIMULATIONS)
+            print(f"ACTION: {a}, for player{root.player_num}")
             state.do_move(a, root.player_num)
-            state.print_board()
+            state.print_board()            
             if verbose:
-                print(f"Player {root.player_num} took {a} number of stones")
-                print(f"There is {state.num_pieces} stones left \n")
+                #print(f"Player{root.player_num}'s turn. There is {root.state.num_pieces} sticks on the table")
+                print(f"Available actions {[i for i in state.get_legal_actions()]}")
+            
             if state.is_winner():
                 break
             root = new_root
@@ -94,28 +102,29 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False):
 
 if __name__ == "__main__":
 
-    # state_manager = sm.StateManager(4)
-    # state_manager.init_board()
-    # state_manager.print_board()
+    #hex_sim(M=10, G=5, board_size=3, verbose=True)
+
+    state_manager = sm.StateManager(3)
+    state_manager.init_board()
+    state_manager.print_board_pretty()
+    # # state_manager.print_board()
     # monte_carlo = MCTS()
     # root = Node(None, state_manager)
 
-    hex_sim(M=500, G=1, board_size=4)
-    #action,a = get_action(root, 1000)
-    #print(a)
-    #print("-----------------------")
-    #action.state.print_board()
 
-    # state_manager.do_move([0,0], 2)
-    # state_manager.do_move([0,1], 1)
+    # state_manager.do_move([0,0], 1)
+    # state_manager.do_move([0,1], 2)
     # state_manager.do_move([0,2], 1)
-    # state_manager.do_move([1,0], 1)
-    # state_manager.do_move([1,1], 2)
+    # state_manager.do_move([1,0], 2)
+    # state_manager.do_move([1,1], 1)
     # state_manager.do_move([1,2], 1)
-    # state_manager.do_move([2,0], 2)
-    # state_manager.do_move([2,1], 1)
+    # state_manager.do_move([2,0], 1)
+    # state_manager.do_move([2,1], 2)
     # state_manager.do_move([2,2], 2)
+    # state_manager.print_board_pretty()
     # state_manager.print_board()
+    # print(state_manager.get_flat_board())
+    # print(state_manager.get_legal_actions())
     # print(state_manager.check_player1_win())
     # print(state_manager.check_player2_win())
 
