@@ -1,8 +1,6 @@
 import state_manager as sm
 from montecarlo import MCTS
 from montecarlo import Node
-import matplotlib.pyplot as plt 
-import matplotlib.patches as mplp 
 import copy
 
 

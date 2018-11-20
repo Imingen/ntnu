@@ -13,3 +13,4 @@ HUSK HUSK HUSK:
 kan kun være ett tomt brett. Dette kan også gjøre det enklere 
 å sjekke status for ruter på brettet. 
 
+    

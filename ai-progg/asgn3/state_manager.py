@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.patches as mplp  
 import copy
 
 
@@ -26,7 +24,37 @@ class StateManager():
             for j, col in enumerate(row):
                 c.append(self.board[i][j].color)
             print(c)
-        print("_____________________")
+        print("____________________")
+
+    def get_flat_board(self):
+        """Returns a flat representions of the board. 
+        To be used as input to the neural network.
+        
+        Returns: A 1D numpy array that represents the game-board
+        """
+        flat_list = []
+        for i in range(0, self.size):
+            for j in range(0, self.size):
+                if self.board[i][j].color == self.color_dict[1]:
+                    flat_list.append(1)
+                if self.board[i][j].color == self.color_dict[2]:
+                    flat_list.append(2)
+                if self.board[i][j].color == self.color_dict[3]:
+                    flat_list.append(0)
+        return np.array([flat_list])
+
+    def int_to_index(self, x):
+        """Turns a simple int which is an index in a 1D array
+        into an index for a matrix
+
+        Input: x, an integer. 
+
+        Returns: An array [i,j] of row and column in a matrix
+        """
+        i = x // self.size
+        j = x % self.size
+        return [i,j]
+
     
     def get_legal_actions(self):
         legal_actions = []
