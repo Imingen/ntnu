@@ -2,70 +2,36 @@ import keras
 from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
-from keras.optimizers import RMSprop
+from keras import optimizers
 import numpy as np
 import state_manager as sm
+import random 
 
 
-
-# region 
-# def simulation(node, model):
-
-#     n = node
-#     while True:
-        
-#         flat_state = n.state.get_flat_board()
-#         index = neural_magic(model, flat_state)
-#         action = n.state.int_to_index(index)
-#         print(index)
-#         print(action)
-#         new_state = n.state.gen_successor(action, n.player_num)
-#         new_state.print_board()
-
-#         if n.player_num == 1:
-#             result = new_state.check_player1_win()
-#             if result is True:
-#                 # print('Player ONE')
-#                 # n.state.print_board()
-#                 n.state = new_state
-#                 n.state.winner = "Player ONE"
-#                 break
-#         if n.player_num == 2:
-#             result = new_state.check_player2_win()
-#             if result is True:
-#                 # print('Player TWO')
-#                 # n.state.print_board()
-#                 n.state = new_state
-#                 n.state.winner = "Player TWO"
-#                 break
-#         new_node = Node(n, new_state, player_num=3-n.player_num)
-#         n = new_node
-#     n.state.print_board()
-#     print(f"Winner: {n.state.winner}")
-
-#     if n.player_num == 1:
-#         return 1
-#     else: 
-#         return -1
-
-# endregion
 
 def get_anet(num_input, num_output):
 
     model = Sequential()
-    model.add(Dense(num_input, activation='relu', input_shape=(num_input,)))
-    model.add(Dense(32, activation='relu'))
+    model.add(Dense(num_input+1, activation='relu', input_shape=(num_input,)))
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(64, activation='relu'))
     model.add(Dense(num_output, activation='softmax'))
-    model.compile(loss='categorical_crossentropy',
-              optimizer="SGD",
+    adam = optimizers.Adam(lr=0.1)
+    model.compile(loss='mean_squared_error',
+              optimizer=adam,
               metrics=['accuracy'])
 
     return model 
 
-def neural_magic(model, state):
+def neural_magic(model, state, epsilon=True):
     """
     This lil bitch is for getting an action 
     """
+    if epsilon:
+        epsilon = 0.1
+        check = random.randint(0, 100)
+        check = check/100
+
     prediction = model.predict(state)
     # print(f"SUM:{sum(prediction[0])}")
     # print(f"Before: {prediction}")
@@ -77,19 +43,27 @@ def neural_magic(model, state):
     prediction = keras.utils.normalize(prediction[0], order=1)
     # print(f"SUM:{sum(prediction[0])}")
     #print(f"After: {prediction}")
-
-    highest_index = np.argmax(prediction)
+    if epsilon:
+        if check > epsilon:
+            highest_index = np.argmax(prediction)
+        else:
+            r = random.randint(0, len(prediction[0])-1)
+            return r
+    else:
+        return np.argmax(prediction)
     return highest_index
 
-# train = np.array([c1,c2])
-# labels = np.array([l1,l2])
+def train_anet(model, train_data):
 
-#model.summary()
-
-
-
-# model.fit(x=train, y=labels, epochs=100)
-# score = model.evaluate(x=train, y=labels)
+    #print(train_data)
+    train = np.array([x[0] for x in train_data])
+    labels = np.array([x[1] for x in train_data])
+    labels = keras.utils.normalize(labels, order=1)
+    #print(labels)
+    # model.summary()
+    model.fit(x=train, y=labels, epochs=10, verbose=0)
+    score = model.evaluate(x=train, y=labels)
+    #print(score)
 
 
 #if __name__ == "__main__":

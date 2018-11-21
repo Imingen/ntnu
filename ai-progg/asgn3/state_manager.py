@@ -51,8 +51,6 @@ class StateManager():
                 diamond_grid[new_row][new_col] = self.board[i][j].color
 
         diamond_grid = np.array(diamond_grid)
-        print(diamond_grid)
-        print("__________________________")
         for item in diamond_grid:
             str1 = ''.join(item)
             print(str1)

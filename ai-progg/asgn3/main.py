@@ -3,9 +3,12 @@ from montecarlo import MCTS
 from montecarlo import Node
 import singularity as si
 import copy
+import time
+import numpy as np 
+import random
 
 
-def get_action(node, num_rollouts):
+def get_action(node, num_rollouts, neural_net):
     '''
     Takes in a node and runs monte-carlo-tree search 
     from this node and returns an action that would be taken from this 
@@ -19,8 +22,7 @@ def get_action(node, num_rollouts):
         print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
         root.state.print_board()
         print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-
-    anet = si.get_anet(root.state.size**2, root.state.size**2)
+    anet = neural_net
     while rollouts > 0:
         rollouts -= 1
         if len(root.children) == 0:
@@ -42,20 +44,38 @@ def get_action(node, num_rollouts):
                 else:
                     monte_carlo.backprop(1, n)
 
+    # Find the child of root with the most visit counts
     best = root.children[0]
     for child in root.children:
         if child.num_visits > best.num_visits:
             best = child
-            
+    # Returns row,col as action to take in the main game tree            
     best_legal = None
     for legal in root.state.get_legal_actions():
         if legal not in best.state.get_legal_actions():
             best_legal = legal
 
-    #print([x for x in root.state.get_legal_actions() if x not in best.state.get_legal_actions()])
-    return best, best_legal 
+    # Make a tuple of the root state and the distribution of the visit counts 
+    # of the roots children, to be used as a training case for the ANET
+    this_state = root.state.get_flat_board()
+    np.insert(this_state,0, root.player_num)
+    print(len(root.children))
+    children_visitcount = [child.num_visits for child in root.children]
+    distribution = [0] * len(this_state[0])
 
-def hex_sim(M, G, board_size = 3, player=1, verbose=False):
+    for i, item in enumerate(this_state[0]):
+        if item == 0:
+            distribution[i] = children_visitcount.pop(0)
+    # print(f"distribution: {distribution}")    
+    # print(f"this state: {this_state[0]}")    
+    distribution = np.array(distribution)
+    case = [this_state[0], distribution]
+    case = tuple(case)
+
+    #print([x for x in root.state.get_legal_actions() if x not in best.state.get_legal_actions()])
+    return best, best_legal, case
+
+def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
     '''
     Run the HEX simulator using MCTS with different parameters
     '''
@@ -65,10 +85,15 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False):
     NUM_GAMES = G
     monte_carlo = MCTS()
     one = 0
-    while NUM_GAMES > 0:
+
+    replay_buffer = []
+    anet = si.get_anet(board_size**2, board_size**2)
+    i = save_interval
+    while NUM_GAMES >= 0:
         state = sm.StateManager(BOARD_SIZE)
         state.init_board()
         root = Node(None, state)
+
         # if player == 2:
         #     root.player_num = 2
         # if player == 3:
@@ -80,48 +105,62 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False):
             print("#######################################")    
 
         while True:
-            
-            new_root, a = get_action(root, NUM_SIMULATIONS)
+            new_root, a, training_case = get_action(root, NUM_SIMULATIONS, anet)
+            replay_buffer.append(training_case)
             print(f"ACTION: {a}, for player{root.player_num}")
             state.do_move(a, root.player_num)
-            state.print_board()            
-            if verbose:
+            state.print_board_pretty()
+            #if verbose:
                 #print(f"Player{root.player_num}'s turn. There is {root.state.num_pieces} sticks on the table")
-                print(f"Available actions {[i for i in state.get_legal_actions()]}")
-            
+             #   print(f"Available actions {[i for i in state.get_legal_actions()]}")
+
             if state.is_winner():
                 break
             root = new_root
+            root.parent = None
+
         print(f"Player {root.player_num} won game #{G - (NUM_GAMES - 1)} ")
+        print(f"Replay buffer length: {len(replay_buffer)}")
+        mbatch = random.sample(replay_buffer, 7)
+        si.train_anet(anet, replay_buffer)
+        
+        if NUM_GAMES % i == 0:
+            path = "/home/marius/ntnu/ai-progg/asgn3/models/anet"+ str((G - NUM_GAMES)) +".h5"
+            anet.save(path)            
+        
         if root.player_num == 1:
            one += 1
+        
         NUM_GAMES -= 1
+
     print("\n#######################################")    
     print(f"Player 1 won {one} out of {G} games")
     print("#######################################")    
 
 if __name__ == "__main__":
 
-    #hex_sim(M=10, G=5, board_size=3, verbose=True)
-
-    state_manager = sm.StateManager(3)
-    state_manager.init_board()
-    state_manager.print_board_pretty()
+    t0 = time.time()
+    hex_sim(M=1000, G=200, board_size=4, verbose=True, save_interval=50)
+    t1 = time.time()
+    print(f"TIME: {t1 - t0}")
+    # state_manager = sm.StateManager(3)
+    # state_manager.init_board()
+    # state_manager.print_board_pretty()
     # # state_manager.print_board()
     # monte_carlo = MCTS()
     # root = Node(None, state_manager)
 
 
-    state_manager.do_move([0,0], 1)
-    state_manager.do_move([0,1], 2)
-    state_manager.do_move([0,2], 1)
-    state_manager.do_move([1,0], 2)
-    state_manager.do_move([1,1], 1)
-    state_manager.do_move([1,2], 1)
-    state_manager.do_move([2,0], 1)
-    state_manager.do_move([2,1], 2)
-    state_manager.do_move([2,2], 2)
-    state_manager.print_board_pretty()
+    # state_manager.do_move([0,0], 1)
+    # state_manager.do_move([0,1], 2)
+    # state_manager.do_move([0,2], 1)
+    # state_manager.do_move([1,0], 2)
+    # state_manager.do_move([1,1], 1)
+    # state_manager.do_move([1,2], 1)
+    # state_manager.do_move([2,0], 1)
+    # state_manager.do_move([2,1], 2)
+    # state_manager.do_move([2,2], 2)
+    # state_manager.print_board_pretty()
     # state_manager.print_board()
     # print(state_manager.get_flat_board())
     # print(state_manager.get_legal_actions())

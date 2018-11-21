@@ -1,10 +1,16 @@
 
 
 1. Representing the game state
-    b) How to vizualise it
-    c) How to represent it for neural net shit
+    c) THINK THIS IS DONE: How to represent it for neural net shit
+
 
 3. Do the neural net shit, probably part of the MCTS algorithm
+    a) Save training cases
+    b) train the neural net
+    c) see if it trains
+    d) check eval.accuracy
+    e) check madly-trained-sick-neural net vs non trained: Should win all
+    f) start on TOPP
 
 4. Tournament of progressive policies (TOPP)
 
