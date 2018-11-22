@@ -112,7 +112,7 @@ class StateManager():
                     flat_list.append(2)
                 if self.board[i][j].color == self.color_dict[3]:
                     flat_list.append(0)
-                    
+
         flat_list.insert(0, player_num)
         return np.array([flat_list])
 
@@ -198,8 +198,10 @@ class StateManager():
 
     def is_winner(self):
         if self.check_player1_win() == True:
+            self.winner = "Player 1 won"
             return True
         if self.check_player2_win() == True:
+            self.winner = "Player 2 won"
             return True
         else:
             return False

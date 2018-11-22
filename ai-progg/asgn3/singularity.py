@@ -13,10 +13,10 @@ def get_anet(num_input, num_output):
 
     model = Sequential()
     model.add(Dense(num_input+1, activation='relu', input_shape=(num_input+1,)))
+    model.add(Dense(254, activation='relu'))
     model.add(Dense(128, activation='relu'))
-    model.add(Dense(64, activation='relu'))
     model.add(Dense(num_output, activation='softmax'))
-    adam = optimizers.Adam(lr=0.1)
+    adam = optimizers.Adam(lr=0.001)
     model.compile(loss='mean_squared_error',
               optimizer=adam,
               metrics=['accuracy'])
@@ -35,8 +35,9 @@ def neural_magic(model, state, epsilon=True):
     prediction = model.predict(state)
     # print(f"SUM:{sum(prediction[0])}")
     # print(f"Before: {prediction}")
+    tmp = state[0][1:]
     for i in range(len(prediction[0])):
-        if state[0][i] != 0:
+        if tmp[i] != 0:
             prediction[0][i] = 0.0
     # print(f"After: {prediction}")
     # print(f"SUM:{sum(prediction[0])}")
