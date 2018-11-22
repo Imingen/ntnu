@@ -82,7 +82,7 @@ class MCTS():
         n = copy.copy(node)
         while True:
             
-            flat_state = n.state.get_flat_board()
+            flat_state = n.state.get_flat_board(n.player_num)
             index = neural_magic(model, flat_state)
             action = n.state.int_to_index(index)
            # print(index)

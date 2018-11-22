@@ -57,13 +57,11 @@ def get_action(node, num_rollouts, neural_net):
 
     # Make a tuple of the root state and the distribution of the visit counts 
     # of the roots children, to be used as a training case for the ANET
-    this_state = root.state.get_flat_board()
-    np.insert(this_state,0, root.player_num)
-    print(len(root.children))
+    this_state = root.state.get_flat_board(root.player_num)
     children_visitcount = [child.num_visits for child in root.children]
-    distribution = [0] * len(this_state[0])
-
-    for i, item in enumerate(this_state[0]):
+    tmp = this_state[0]
+    distribution = [0] * len(tmp[1:])
+    for i, item in enumerate(tmp[1:]):
         if item == 0:
             distribution[i] = children_visitcount.pop(0)
     # print(f"distribution: {distribution}")    
@@ -89,16 +87,22 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
     replay_buffer = []
     anet = si.get_anet(board_size**2, board_size**2)
     i = save_interval
+
     while NUM_GAMES >= 0:
         state = sm.StateManager(BOARD_SIZE)
         state.init_board()
         root = Node(None, state)
 
-        # if player == 2:
-        #     root.player_num = 2
-        # if player == 3:
-        #     i = random.randint(1,2)
-        #     root.player_num = i
+        if player == 2:
+            root.player_num = 2
+        if player == 3:
+            q = random.randint(1,2)
+            root.player_num = q
+
+        if NUM_GAMES % i == 0:
+            path = "/home/marius/ntnu/ai-progg/asgn3/models/"+ str((G - NUM_GAMES)) +".h5"
+            anet.save(path)  
+
         if verbose:
             print("\n#######################################")   
             print(f"Game #{G - (NUM_GAMES - 1)} starting")
@@ -117,22 +121,24 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
             if state.is_winner():
                 break
             root = new_root
-            root.parent = None
+            #root.parent = Nonenew_root
 
         print(f"Player {root.player_num} won game #{G - (NUM_GAMES - 1)} ")
         print(f"Replay buffer length: {len(replay_buffer)}")
-        mbatch = random.sample(replay_buffer, 7)
-        si.train_anet(anet, replay_buffer)
+        #k = 64 if len(replay_buffer) > 60 else 4
+        h = random.randint(0, len(replay_buffer))
+        mbatch = random.sample(replay_buffer, h)
+        si.train_anet(anet, mbatch)
         
-        if NUM_GAMES % i == 0:
-            path = "/home/marius/ntnu/ai-progg/asgn3/models/anet"+ str((G - NUM_GAMES)) +".h5"
-            anet.save(path)            
-        
+
         if root.player_num == 1:
            one += 1
-        
+ 
+
         NUM_GAMES -= 1
 
+         
+        
     print("\n#######################################")    
     print(f"Player 1 won {one} out of {G} games")
     print("#######################################")    
@@ -140,7 +146,7 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
 if __name__ == "__main__":
 
     t0 = time.time()
-    hex_sim(M=1000, G=200, board_size=4, verbose=True, save_interval=50)
+    hex_sim(M=500, G=200, board_size=5, verbose=True, player=3, save_interval=5)
     t1 = time.time()
     print(f"TIME: {t1 - t0}")
     # state_manager = sm.StateManager(3)
