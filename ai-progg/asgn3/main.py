@@ -57,8 +57,9 @@ def get_action(node, num_rollouts, neural_net):
 
     # Make a tuple of the root state and the distribution of the visit counts 
     # of the roots children, to be used as a training case for the ANET
-    this_state = root.state.get_flat_board()
-    np.insert(this_state,0, root.player_num)
+    this_state = root.state.get_flat_board(root.player_num)
+    this_state = np.insert(this_state,0, root.player_num)
+    this_state = np.array([this_state])
     print(len(root.children))
     children_visitcount = [child.num_visits for child in root.children]
     distribution = [0] * len(this_state[0])
@@ -125,7 +126,7 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
         si.train_anet(anet, replay_buffer)
         
         if NUM_GAMES % i == 0:
-            path = "/home/marius/ntnu/ai-progg/asgn3/models/anet"+ str((G - NUM_GAMES)) +".h5"
+            path = "\\models\\anet"+ str((G - NUM_GAMES)) +".h5"
             anet.save(path)            
         
         if root.player_num == 1:
@@ -140,7 +141,7 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
 if __name__ == "__main__":
 
     t0 = time.time()
-    hex_sim(M=1000, G=200, board_size=4, verbose=True, save_interval=50)
+    hex_sim(M=1000, G=200, board_size=4, verbose=True, save_interval=5)
     t1 = time.time()
     print(f"TIME: {t1 - t0}")
     # state_manager = sm.StateManager(3)

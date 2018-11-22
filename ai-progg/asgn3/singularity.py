@@ -12,7 +12,7 @@ import random
 def get_anet(num_input, num_output):
 
     model = Sequential()
-    model.add(Dense(num_input+1, activation='relu', input_shape=(num_input,)))
+    model.add(Dense(num_input+1, activation='relu', input_shape=(num_input+1,)))
     model.add(Dense(128, activation='relu'))
     model.add(Dense(64, activation='relu'))
     model.add(Dense(num_output, activation='softmax'))

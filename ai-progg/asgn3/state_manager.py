@@ -97,7 +97,7 @@ class StateManager():
         return rc_top
 
 
-    def get_flat_board(self):
+    def get_flat_board(self, player_num):
         """Returns a flat representions of the board. 
         To be used as input to the neural network.
         
@@ -112,6 +112,8 @@ class StateManager():
                     flat_list.append(2)
                 if self.board[i][j].color == self.color_dict[3]:
                     flat_list.append(0)
+                    
+        flat_list.insert(0, player_num)
         return np.array([flat_list])
 
 
