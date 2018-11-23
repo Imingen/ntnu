@@ -1,14 +1,16 @@
 import state_manager as sm
 from montecarlo import MCTS
 from montecarlo import Node
-import singularity as si
+from singularity import NeuralNet
 import copy
 import time
 import numpy as np 
 import random
+import pickle
+from topp import TOPP
 
 
-def get_action(node, num_rollouts, neural_net):
+def get_action(node, num_rollouts, net, neural_net, epsilon = 0.1):
     '''
     Takes in a node and runs monte-carlo-tree search 
     from this node and returns an action that would be taken from this 
@@ -17,26 +19,22 @@ def get_action(node, num_rollouts, neural_net):
     rollouts = num_rollouts
     monte_carlo = MCTS()
     root = node
-    x = root.state.get_legal_actions()
-    if len(x) == 0:
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-        root.state.print_board()
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
     anet = neural_net
+    
     while rollouts > 0:
         rollouts -= 1
         if len(root.children) == 0:
             monte_carlo.expand_node(root)
         n = monte_carlo.traverse_tree(root)
         if n.num_visits == 0:
-            value = monte_carlo.simulation(n, anet)
+            value = monte_carlo.simulation(n, anet, net, epsilon)
             monte_carlo.backprop(value, n)
             continue
         if n.num_visits > 0:
             monte_carlo.expand_node(n)
             if len(n.children) > 0:
                 nn = n.children[0]
-                value = monte_carlo.simulation(nn, anet)
+                value = monte_carlo.simulation(nn, anet, net, epsilon)
                 monte_carlo.backprop(value, nn)
             else:
                 if n.player_num == 1:
@@ -55,25 +53,13 @@ def get_action(node, num_rollouts, neural_net):
         if legal not in best.state.get_legal_actions():
             best_legal = legal
 
-    # Make a tuple of the root state and the distribution of the visit counts 
-    # of the roots children, to be used as a training case for the ANET
-    this_state = root.state.get_flat_board(root.player_num)
-    children_visitcount = [child.num_visits for child in root.children]
-    tmp = this_state[0]
-    distribution = [0] * len(tmp[1:])
-    for i, item in enumerate(tmp[1:]):
-        if item == 0:
-            distribution[i] = children_visitcount.pop(0)
-    # print(f"distribution: {distribution}")    
-    # print(f"this state: {this_state[0]}")    
-    distribution = np.array(distribution)
-    case = [this_state[0], distribution]
-    case = tuple(case)
+    case = root.create_training_case()
 
     #print([x for x in root.state.get_legal_actions() if x not in best.state.get_legal_actions()])
     return best, best_legal, case
 
-def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
+def hex_sim(M, G, net=None, epsilon_decay=0.05, epsilon_begin=1, board_size = 3, player=1, 
+                mb_size = 28, verbose=False, save_interval=50):
     '''
     Run the HEX simulator using MCTS with different parameters
     '''
@@ -85,10 +71,16 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
     one = 0
 
     replay_buffer = []
-    anet = si.get_anet(board_size**2, board_size**2)
+    anet = net.get_anet()
     i = save_interval
+    epsilon = epsilon_begin
 
-    while NUM_GAMES >= 0:
+    while NUM_GAMES > 0:
+        if epsilon > 0.1:
+            epsilon = epsilon - epsilon_decay
+        if epsilon < 0.1:
+            epsilon = 0.1
+
         state = sm.StateManager(BOARD_SIZE)
         state.init_board()
         root = Node(None, state)
@@ -99,8 +91,8 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
             q = random.randint(1,2)
             root.player_num = q
 
-        if NUM_GAMES % i == 0:
-            path = "/home/marius/ntnu/ai-progg/asgn3/models/"+ str((G - NUM_GAMES)) +".h5"
+        if NUM_GAMES % i == 0 or G == NUM_GAMES:
+            path = MODELS_SAVE_PATH + str((G - NUM_GAMES)) +".h5"
             anet.save(path)  
 
         if verbose:
@@ -109,7 +101,8 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
             print("#######################################")    
 
         while True:
-            new_root, a, training_case = get_action(root, NUM_SIMULATIONS, anet)
+
+            new_root, a, training_case = get_action(root, NUM_SIMULATIONS, anet,net, epsilon=epsilon)
             replay_buffer.append(training_case)
             print(f"ACTION: {a}, for player{root.player_num}")
             state.do_move(a, root.player_num)
@@ -121,23 +114,28 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
             if state.is_winner():
                 break
             root = new_root
-            #root.parent = Nonenew_root
+            root.parent = None
+            #root.player_num = new_root.player_num
+            #root.player_num = new_root.player_num
 
+ 
         print(f"Player {root.player_num} won game #{G - (NUM_GAMES - 1)} ")
-        print(f"Replay buffer length: {len(replay_buffer)}")
-        #k = 64 if len(replay_buffer) > 60 else 4
-        h = random.randint(0, len(replay_buffer))
-        mbatch = random.sample(replay_buffer, h)
-        si.train_anet(anet, mbatch)
+        print(f"Replay BUFFER: {len(replay_buffer)}")
+        mb_size = mb_size
+        t = len(replay_buffer)
+        k = mb_size if t >= mb_size else len(replay_buffer)
+        mbatch = random.sample(replay_buffer, k)
+        nn.train_anet(anet, mbatch)
         
 
         if root.player_num == 1:
            one += 1
  
-
         NUM_GAMES -= 1
 
-         
+    # Save the last version of the model 
+    path = MODELS_SAVE_PATH + str((G - NUM_GAMES)) +".h5"
+    anet.save(path) 
         
     print("\n#######################################")    
     print(f"Player 1 won {one} out of {G} games")
@@ -145,58 +143,67 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
 
 if __name__ == "__main__":
 
+
+    #################################################
+    #   MAIN ALGORITHM PARAMETERS
+    #################################################
+    RBUFF_SAVE_PATH = "rbuff_3x3"
+    MODELS_SAVE_PATH = "/home/marius/ntnu/ai-progg/asgn3/models_2/"
+    BOARD_SIZE = 3
+    SAVE_INTERVAL = 25
+    NUM_ROLLOUTS = 25
+    NUM_GAMES = 200
+    EPSILON_DECAY = 0.02
+    EPSILON_BEGIN = 0.1 
+    MB_SIZE = 32
+    #################################################
+    #   NEURAL NETWORK PARAMETERS
+    #################################################
+    ACTIVATION = 'relu'
+    OUTPUT_ACTIVATION = 'softmax'
+    LOSS = 'mean_squared_error'
+    OPTIMIZER = 'adam'
+    LEARNING_RATE = 0.1
+    NUMBER_HIDDEN_LAYERS = 4
+    NEURONS_IN_HIDDEN = [400, 400, 200, 100]
+    DROP_OUT = True
+    DROP_OUT_RATE = 0.4
+    NUM_INPUT = BOARD_SIZE**2
+    SPLIT = 0.8
+    EPOCHS = 2
+    ###################################################
+    #   TOPP PARAMETERS
+    ##################################################
+    NUM_TOPP_GAMES = 20
+    PATH = "/home/marius/ntnu/ai-progg/asgn3/models_5x5/"
+    TOPP_VERBOSE = False
+
+
+
+
+    nn = NeuralNet(LEARNING_RATE, NUM_INPUT, NEURONS_IN_HIDDEN, loss=LOSS,  split=SPLIT,
+                    optimizer=OPTIMIZER, activation=ACTIVATION, epochs=EPOCHS, output_activation=OUTPUT_ACTIVATION)
+
+
     t0 = time.time()
-    hex_sim(M=500, G=200, board_size=5, verbose=True, player=3, save_interval=5)
-    t1 = time.time()
-    print(f"TIME: {t1 - t0}")
-    # state_manager = sm.StateManager(3)
-    # state_manager.init_board()
-    # state_manager.print_board_pretty()
-    # # state_manager.print_board()
-    # monte_carlo = MCTS()
-    # root = Node(None, state_manager)
 
-
-    # state_manager.do_move([0,0], 1)
-    # state_manager.do_move([0,1], 2)
-    # state_manager.do_move([0,2], 1)
-    # state_manager.do_move([1,0], 2)
-    # state_manager.do_move([1,1], 1)
-    # state_manager.do_move([1,2], 1)
-    # state_manager.do_move([2,0], 1)
-    # state_manager.do_move([2,1], 2)
-    # state_manager.do_move([2,2], 2)
-    # state_manager.print_board_pretty()
-    # state_manager.print_board()
-    # print(state_manager.get_flat_board())
-    # print(state_manager.get_legal_actions())
-    # print(state_manager.check_player1_win())
-    # print(state_manager.check_player2_win())
-
-
-
-
-
-
-
-
-
-##############################################
-#     root = Node(None, state_manager)
-#     lac = state_manager.get_legal_actions()
-#   #  print("-------------------")
-#     monte_carlo.expand_node(root)
-#     #for kid in root.children:
-#     #    kid.state.print_board()
-#     #    print("------------------")
+    hex_sim(M=NUM_ROLLOUTS, G=NUM_GAMES, net = nn, board_size=BOARD_SIZE, verbose=True, 
+            epsilon_decay=EPSILON_DECAY, epsilon_begin=EPSILON_BEGIN,player=3,
+            mb_size=MB_SIZE, save_interval=SAVE_INTERVAL)
     
-#     new = monte_carlo.traverse_tree(root)
-#     new.state.print_board()
-#     print("-------------------")
+    t1 = time.time()
+    print(f"TIME USED: {t1 - t0}")
 
-#     m = monte_carlo.simulation(new)
-#     print(m)
-################################################
+    # COMMENT HERE IF TOPP SHOULD BE RUN
+    #topp = TOPP(net_man = nn,  num_games=NUM_TOPP_GAMES, board_size=BOARD_SIZE, path=PATH)
+    #topp.run_tournament(verbose=TOPP_VERBOSE)
+
+
+
+
+
+
+
 
 
 
