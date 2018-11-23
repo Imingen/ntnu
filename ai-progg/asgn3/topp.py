@@ -45,6 +45,7 @@ class TOPP():
                         self.win_stats[i][1] += 1
                     else:
                         self.win_stats[j][1] += 1
+        self.win_stats = sorted(self.win_stats,key=lambda x: x[1])
         print(self.win_stats)
 
 

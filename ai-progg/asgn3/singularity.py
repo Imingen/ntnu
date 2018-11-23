@@ -32,7 +32,7 @@ class NeuralNet():
         model.add(Dense(self.num_input+1,  input_shape=((self.num_input)+1,)))
 
         for i in range(len(self.layers)):
-            model.add(Dense(self.layers[i], activation=self.activation , kernel_initializer="random_normal"))
+            model.add(Dense(self.layers[i], activation=self.activation))
             model.add(Dropout(0.3))
 
         model.add(Dense((self.num_input), activation=self.out_activation))
@@ -93,7 +93,7 @@ class NeuralNet():
 
         x = np.array([x[0] for x in train_data])
         y = np.array([x[1] for x in train_data])
-        y = keras.utils.normalize(y, order=2)
+        y = keras.utils.normalize(y, order=1)
         
         split = int((len(x) * self.split))
         train = x[:split]
