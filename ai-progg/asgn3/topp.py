@@ -55,9 +55,8 @@ class TOPP():
         player_1 = 1
         player_2 = 2
 
+        model_dict = {1: model_1, 2: model_2}
         current = random.randint(1,2)
-        model_dict = {current: model_1, 3-current: model_2}
-
         if verbose:
             print(f"Player {current} is starting")
 
