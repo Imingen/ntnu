@@ -15,7 +15,7 @@ class NeuralNet():
     def __init__(self, lr, num_input, layers, split=0.8, optimizer='adam',
             loss='mean_squared_error', epochs=10, activation='relu', output_activation='softmax'):
         self.learning_rate = lr
-        self.layers = []
+        self.layers = layers
         self.num_input = num_input
         self.split = 0.8
         self.optimizer = optimizer

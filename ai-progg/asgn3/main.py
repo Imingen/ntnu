@@ -148,14 +148,14 @@ if __name__ == "__main__":
     #   MAIN ALGORITHM PARAMETERS
     #################################################
     RBUFF_SAVE_PATH = "rbuff_3x3"
-    MODELS_SAVE_PATH = "/home/marius/ntnu/ai-progg/asgn3/models_2/"
-    BOARD_SIZE = 3
-    SAVE_INTERVAL = 5
-    NUM_ROLLOUTS = 20
+    MODELS_SAVE_PATH = "/home/marius/ntnu/ai-progg/asgn3/models_5x5_v2/"
+    BOARD_SIZE = 5
+    SAVE_INTERVAL = 50
+    NUM_ROLLOUTS = 25
     NUM_GAMES = 200
     EPSILON_DECAY = 0.02
     EPSILON_BEGIN = 0.1
-    MB_SIZE = 512
+    MB_SIZE = 64
     #################################################
     #   NEURAL NETWORK PARAMETERS
     #################################################
@@ -163,14 +163,14 @@ if __name__ == "__main__":
     OUTPUT_ACTIVATION = 'softmax'
     LOSS = 'mean_squared_error'
     OPTIMIZER = 'adam'
-    LEARNING_RATE = 0.01
-    NUMBER_HIDDEN_LAYERS = 3
-    NEURONS_IN_HIDDEN = [200, 200]
+    LEARNING_RATE = 0.0001
+    NUMBER_HIDDEN_LAYERS = 2
+    NEURONS_IN_HIDDEN = [500, 500]
     DROP_OUT = True
-    DROP_OUT_RATE = 0.2
+    DROP_OUT_RATE = 0.3
     NUM_INPUT = BOARD_SIZE**2
     SPLIT = 0.8
-    EPOCHS = 5
+    EPOCHS = 100
     ###################################################
     #   TOPP PARAMETERS
     ##################################################
@@ -187,9 +187,9 @@ if __name__ == "__main__":
 
     t0 = time.time()
 
-    hex_sim(M=NUM_ROLLOUTS, G=NUM_GAMES, net = nn, board_size=BOARD_SIZE, verbose=True, 
-          epsilon_decay=EPSILON_DECAY, epsilon_begin=EPSILON_BEGIN,player=3,
-          mb_size=MB_SIZE, save_interval=SAVE_INTERVAL)
+    #hex_sim(M=NUM_ROLLOUTS, G=NUM_GAMES, net = nn, board_size=BOARD_SIZE, verbose=True, 
+    #      epsilon_decay=EPSILON_DECAY, epsilon_begin=EPSILON_BEGIN,player=3,
+    #      mb_size=MB_SIZE, save_interval=SAVE_INTERVAL)
     
     t1 = time.time()
     print(f"TIME USED: {t1 - t0}")
