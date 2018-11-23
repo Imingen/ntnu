@@ -1,89 +1,109 @@
 import keras
 from keras.datasets import mnist
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, LeakyReLU
 from keras import optimizers
+from keras import regularizers
 import numpy as np
 import state_manager as sm
 import random 
 
 
 
-def get_anet(num_input, num_output):
+class NeuralNet():
 
-    model = Sequential()
-    model.add(Dense(num_input+1, activation='relu', input_shape=(num_input+1,)))
-    model.add(Dense(254, activation='relu'))
-    model.add(Dense(128, activation='relu'))
-    model.add(Dense(num_output, activation='softmax'))
-    adam = optimizers.Adam(lr=0.001)
-    model.compile(loss='mean_squared_error',
-              optimizer=adam,
-              metrics=['accuracy'])
+    def __init__(self, lr, num_input, layers, split=0.8, optimizer='adam',
+            loss='mean_squared_error', epochs=10, activation='relu', output_activation='softmax'):
+        self.learning_rate = lr
+        self.layers = []
+        self.num_input = num_input
+        self.split = 0.8
+        self.optimizer = optimizer
+        self.loss = loss
+        self.activation = activation
+        self.out_activation = output_activation
+        self.epochs = epochs
 
-    return model 
 
-def neural_magic(model, state, epsilon=True):
-    """
-    This lil bitch is for getting an action 
-    """
-    if epsilon:
-        epsilon = 0.1
-        check = random.randint(0, 100)
-        check = check/100
+    def get_anet(self):
 
-    prediction = model.predict(state)
-    # print(f"SUM:{sum(prediction[0])}")
-    # print(f"Before: {prediction}")
-    tmp = state[0][1:]
-    for i in range(len(prediction[0])):
-        if tmp[i] != 0:
-            prediction[0][i] = 0.0
-    # print(f"After: {prediction}")
-    # print(f"SUM:{sum(prediction[0])}")
-    prediction = keras.utils.normalize(prediction[0], order=1)
-    # print(f"SUM:{sum(prediction[0])}")
-    #print(f"After: {prediction}")
-    if epsilon:
-        if check > epsilon:
-            highest_index = np.argmax(prediction)
+        model = Sequential()
+
+        model.add(Dense(self.num_input+1,  input_shape=((self.num_input)+1,)))
+
+        for i in range(len(self.layers)):
+            model.add(Dense(self.layers[i], activation=self.activation))
+            model.add(Dropout(0.3))
+
+        model.add(Dense((self.num_input), activation=self.out_activation))
+        if self.optimizer == 'adam':
+            opt = optimizers.Adam(lr=self.learning_rate)
+        if self.optimizer == 'sdg':
+            opt = optimizers.SGD(lr=self.learning_rate)
+        if self.optimizer == 'rmsprop':
+            opt = optimizers.RMSprop(lr=self.learning_rate)
+        if self.optimizer == 'adagrad':
+            opt = optimizers.Adagrad(lr=self.learning_rate)
+
+        model.compile(loss=self.loss,
+                optimizer=opt,
+                metrics=['accuracy'])
+
+        return model 
+
+    def neural_magic(self, model, state, player, epsilon=0.1):
+        """
+        This lil bitch is for getting an action 
+        """
+        highest_index = 0
+
+        flat_state = state.get_flat_board(player)
+        prediction = model.predict(flat_state)
+        tmp = flat_state[0][1:]
+        for i in range(len(prediction[0])):
+            if tmp[i] != 0:
+                prediction[0][i] = 0.0
+
+        prediction = keras.utils.normalize(prediction[0], order=1)
+
+        if epsilon is not None:
+            epsilon = epsilon
+            check = random.randint(0, 100)
+            check = check/100
+            if check > epsilon:
+                tmp = np.argmax(prediction)
+                highest_index = state.int_to_index(tmp)
+            else:
+                lac = state.get_legal_actions()
+                try:
+                    r = random.randint(0,  len(lac)-1)
+                except:
+                    print(state.winner)
+                    print(flat_state)
+                    state.print_board_pretty()
+                    print(f"LAC: {lac}")
+                return lac[r]
         else:
-            r = random.randint(0, len(prediction[0])-1)
-            return r
-    else:
-        return np.argmax(prediction)
-    return highest_index
+            tmp = np.argmax(prediction)
+            highest_index =  state.int_to_index(tmp)
 
-def train_anet(model, train_data):
+        return highest_index
 
-    #print(train_data)
-    train = np.array([x[0] for x in train_data])
-    labels = np.array([x[1] for x in train_data])
-    labels = keras.utils.normalize(labels, order=1)
-    #print(labels)
-    # model.summary()
-    model.fit(x=train, y=labels, epochs=10, verbose=0)
-    score = model.evaluate(x=train, y=labels)
-    #print(score)
+    def train_anet(self, model, train_data):
 
+        x = np.array([x[0] for x in train_data])
+        y = np.array([x[1] for x in train_data])
+        y = keras.utils.normalize(y, order=1)
+        
+        split = int((len(x) * self.split))
+        train = x[:split]
+        train_labels = y[:split]
 
-#if __name__ == "__main__":
-    
-    # state = sm.StateManager(4)
-    # state.init_board()
-    # root = Node(None, state)
+        test = x[split:]
+        test_labels = y[split:]
 
-    # flat_state = state.get_flat_board()
-    # #print(flat_state)
-    # anet = get_anet(state.size**2, state.size**2)
-    # #neural_magic(anet, flat_state)
-    # simulation(root, anet)
-
-
-#print("_------------------_")
-#print(the_board)
-#ok = model.predict_classes(the_board)
-#print(ok)
-
+        model.fit(x=train, y=train_labels, validation_split=0.1, epochs=self.epochs, verbose=1)
+        score = model.evaluate(x=test, y=test_labels)
+        print(score)
 
 

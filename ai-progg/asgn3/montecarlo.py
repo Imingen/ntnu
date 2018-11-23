@@ -1,7 +1,8 @@
 import copy
 import random
 import math 
-from singularity import neural_magic
+from singularity import NeuralNet
+import numpy as np
 ############################################
 #   This file contains the logic for 
 #   the monte-carlo-tree-search algorithm 
@@ -28,6 +29,22 @@ class Node():
         if self.parent is None:
             return True
 
+    def create_training_case(self):
+        # Make a tuple of the root state and the distribution of the visit counts 
+        # of the roots children, to be used as a training case for the ANET
+        this_state = self.state.get_flat_board(self.player_num)
+        children_visitcount = [child.num_visits for child in self.children]
+        tmp = this_state[0]
+        distribution = [0] * len(tmp[1:])
+        for i, item in enumerate(tmp[1:]):
+            if item == 0:
+                distribution[i] = children_visitcount.pop(0)
+        # print(f"distribution: {distribution}")    
+        # print(f"this state: {this_state[0]}")    
+        distribution = np.array(distribution)
+        case = [this_state[0], distribution]
+        case = tuple(case)
+        return case
 
 class MCTS():
     '''
@@ -77,35 +94,41 @@ class MCTS():
                 node.children.append(new_node)
 
 
-    def simulation(self, node, model):
+    def simulation(self, node,nn, model, epsilon):
 
         n = copy.copy(node)
-        while True:
+        if n.state.check_player1_win():
+            return 1
+        if n.state.check_player2_win():
+            return 0
             
-            flat_state = n.state.get_flat_board(n.player_num)
-            index = neural_magic(model, flat_state)
-            action = n.state.int_to_index(index)
+        while True:
+            if n.player_num == 1:
+                result = n.state.check_player1_win()
+                if result is True:
+                    # print('Player ONE')
+                    # n.state.print_board()
+                    #n.state = new_state
+                    n.state.winner = "Player ONE"
+                    break
+            if n.player_num == 2:
+                result = n.state.check_player2_win()
+                if result is True:
+                    # print('Player TWO')
+                    # n.state.print_board()
+                    #n.state = new_state
+                    n.state.winner = "Player TWO"
+                    break
+            
+            try:
+                action = nn.neural_magic(model, node.state, node.player_num, epsilon=epsilon)
+            except ValueError:
+                print(n.state)
+                print(n.state.get_flat_board())
            # print(index)
            # print(action)
             new_state = n.state.gen_successor(action, n.player_num)
             #new_state.print_board()
-
-            if n.player_num == 1:
-                result = new_state.check_player1_win()
-                if result is True:
-                    # print('Player ONE')
-                    # n.state.print_board()
-                    n.state = new_state
-                    n.state.winner = "Player ONE"
-                    break
-            if n.player_num == 2:
-                result = new_state.check_player2_win()
-                if result is True:
-                    # print('Player TWO')
-                    # n.state.print_board()
-                    n.state = new_state
-                    n.state.winner = "Player TWO"
-                    break
             new_node = Node(n, new_state, player_num=3-n.player_num)
             n = new_node
         #n.state.print_board()
@@ -144,6 +167,7 @@ class MCTS():
                 return avrg - (C*math.sqrt(math.log(node.parent.num_visits) / node.num_visits))
         else:
             return 0
+
 
 
 

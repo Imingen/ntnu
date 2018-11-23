@@ -113,6 +113,7 @@ class StateManager():
                 if self.board[i][j].color == self.color_dict[3]:
                     flat_list.append(0)
 
+
         flat_list.insert(0, player_num)
         return np.array([flat_list])
 
