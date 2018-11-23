@@ -100,7 +100,8 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
             root.player_num = q
 
         if NUM_GAMES % i == 0:
-            path = "/home/marius/ntnu/ai-progg/asgn3/models/"+ str((G - NUM_GAMES)) +".h5"
+            
+            path = "models_5x5_desktop\\"+ str((G - NUM_GAMES)) +".h5"
             anet.save(path)  
 
         if verbose:
@@ -120,13 +121,14 @@ def hex_sim(M, G, board_size = 3, player=1, verbose=False, save_interval=50):
 
             if state.is_winner():
                 break
-            root = new_root
+            root = Node(None, state)
+            root.player_num = new_root.player_num
             #root.parent = Nonenew_root
 
         print(f"Player {root.player_num} won game #{G - (NUM_GAMES - 1)} ")
         print(f"Replay buffer length: {len(replay_buffer)}")
         #k = 64 if len(replay_buffer) > 60 else 4
-        h = random.randint(0, len(replay_buffer))
+        h = random.randint(1, len(replay_buffer)-1)
         mbatch = random.sample(replay_buffer, h)
         si.train_anet(anet, mbatch)
         
